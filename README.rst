@@ -9,9 +9,9 @@ Using
 
 To define a view, do something like this::
 
-    from django_conneg.views import ContentNegotiatingView
+    from django_conneg.views import ContentNegotiatedView
 
-    class IndexView(ContentNegotiatingView):
+    class IndexView(ContentNegotiatedView):
         def get(self, request):
             context = {
                 # Build context here
@@ -23,7 +23,7 @@ To define a view, do something like this::
 This will then look for a renderer that can provide a representation that
 matches what was asked for in the Accept header.
 
-By default ContentNegotiatingView provides no renderers, so the above snippet
+By default ContentNegotiatedView provides no renderers, so the above snippet
 would always return a 405 Not Acceptable to tell the user-agent that it
 couldn't provide a response in a suggested format.
 
@@ -35,7 +35,7 @@ To define a renderer on a view, do something like this::
 
     from django_conneg.decorators import renderer
 
-    class JSONView(ContentNegotiatingView):
+    class JSONView(ContentNegotiatedView):
         @renderer(format='json', mimetypes=('application/json',), name='JSON')
         def render_json(self, request, context, template_name):
             # Very simplistic, and will fail when it encounters 'non-primitives'
@@ -56,7 +56,7 @@ to both HTML and JSON like this::
 You can render to a particular format by calling ``render_to_format()`` on the
 view::
 
-    class IndexView(ContentNegotiatingView):
+    class IndexView(ContentNegotiatedView):
         def get(self, request):
             # …
 
@@ -80,7 +80,7 @@ decorator.
 To change the name of the parameter used, override
 ``_format_override_parameter`` on the view class::
 
-    class MyView(ContentNegotiatingView):
+    class MyView(ContentNegotiatedView):
         _format_override_parameter = 'output'
 
 
