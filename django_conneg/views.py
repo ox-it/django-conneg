@@ -1,6 +1,8 @@
+import datetime
 import httplib
 import inspect
 import itertools
+import time
 
 from django.views.generic import View
 from django.utils.decorators import classonlymethod
@@ -125,3 +127,41 @@ class HTMLView(ContentNegotiatedView):
                                       mimetype='text/html')
         except TemplateDoesNotExist:
             return NotImplemented
+
+class TextView(ContentNegotiatedView):
+    @renderer(format="txt", mimetypes=('text/plain',), priority=1, name='Plain text')
+    def render_text(self, request, context, template_name):
+        if template_name is None:
+            return NotImplemented
+        try:
+            return render_to_response(template_name+'.txt',
+                                      context, context_instance=RequestContext(request),
+                                      mimetype='text/plain')
+        except TemplateDoesNotExist:
+            return NotImplemented
+
+try:
+    import json
+except ImportError:
+    try:
+        import simplejson as json
+    except ImportError:
+        pass
+
+# Only define if json is available.
+if 'json' in locals():
+    class JSONView(ContentNegotiatedView):
+        def simplify(self, value):
+            if isinstance(value, datetime.datetime):
+                return time.mktime(value.timetuple()) * 1000
+            if isinstance(value, (list, tuple)):
+                return [self.simplify(item) for item in value]
+            if isinstance(value, dict):
+                return dict([(key, self.simplify(value[key])) for key in value])
+            else:
+                return value
+
+        @renderer(format='json', mimetypes=('application/json',), name='JSON')
+        def render_json(self, request, context, template_name):
+            return http.HttpResponse(json.dumps(self.simplify(context)),
+                                     mimetype="application/json")
