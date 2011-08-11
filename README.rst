@@ -77,8 +77,8 @@ To change the name of the parameter used, override
         _format_override_parameter = 'output'
 
 
-Providing fallback renderer
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Providing fallback renderers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Sometimes you might want to provide a response in some format even if the
 those in the Accept header can't be honoured. This is useful when providing
