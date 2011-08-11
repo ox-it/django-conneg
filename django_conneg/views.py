@@ -93,7 +93,7 @@ Your Accept header didn't contain any supported media ranges.
 
 Supported ranges are:
 
- * %s\n""" % '\n * '.join(sorted('%s (%s)' % (f[0].value, f[1].format) for f in self._renderers_by_mimetype if not f[0] in tried_mimetypes)), mimetype="text/plain")
+ * %s\n""" % '\n * '.join(sorted('%s (%s; %s)' % (f[1].name, f[0].value, f[1].format) for f in self._renderers_by_mimetype.items() if not f[0] in tried_mimetypes)), mimetype="text/plain")
         response.status_code = httplib.NOT_ACCEPTABLE
         return response
 
