@@ -84,3 +84,20 @@ To change the name of the parameter used, override
         _format_override_parameter = 'output'
 
 
+Providing fallback renderer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Sometimes you might want to provide a response in some format even if the
+those in the Accept header can't be honoured. This is useful when providing
+error responses in a different format to the client's expected format. To do
+this, set the ``_force_fallback_format`` attribute to the name of the format::
+
+    class MyView(ContentNegotiatedView):
+        _force_fallback_format = 'html'
+
+If a client doesn't provide an Accept header, then you can specify a default
+format with ``_default_format``::
+
+    class MyView(ContentNegotiatedView):
+        _default_format = 'html'
+
