@@ -76,7 +76,7 @@ setup(
                  'Operating System :: OS Independent',
                  'Programming Language :: Python',
                  'Topic :: Internet :: WWW/HTTP :: Dynamic Content'],
-    keywords=['linked data', 'REST', 'University of Oxford', 'time-series', 'open data', 'metering'],
+    keywords=['REST', 'University of Oxford', 'content negotiation', 'Accept header', 'Django'],
     data_files=data_files,
     install_requires=install_requires,
     dependency_links=dependency_links,
