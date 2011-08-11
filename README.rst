@@ -42,7 +42,7 @@ To define a renderer on a view, do something like this::
             # like Django Model objects, Forms, etc.
             return HttpResponse(json.dumps(context), mimetype='application/json')
 
-.. note ::
+.. note::
    ``django-conneg`` already provides a slightly more sophisticated JSONView;
    see below for more information.
 
@@ -100,10 +100,10 @@ Built-in renderer views
 ``django_conneg`` includes the following built-in renderers in the
 ``django_conneg.views`` module:
 
- * ``HTMLView`` (renders a ``.html`` template with media type ``text/html``)
- * ``TextView`` (renders a ``.html`` template with media type ``text/plain``)
- * ``JSONView`` (coerces the context to JavaScript primitives and returns as ``application/json``)
- * ``JSONPView`` (as ``JSONView``, but wraps in a callback and returns as ``application/javascript``)
+* ``HTMLView`` (renders a ``.html`` template with media type ``text/html``)
+* ``TextView`` (renders a ``.html`` template with media type ``text/plain``)
+* ``JSONView`` (coerces the context to JavaScript primitives and returns as ``application/json``)
+* ``JSONPView`` (as ``JSONView``, but wraps in a callback and returns as ``application/javascript``)
 
 Using these, you could define a view that renders to both HTML and JSON like this::
 
