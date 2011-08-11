@@ -51,7 +51,7 @@ view::
 
     class IndexView(ContentNegotiatedView):
         def get(self, request):
-            # …
+            # ...
 
             if some_condition:
                 return self.render_to_format(request, context, 'index', 'html')
@@ -111,6 +111,6 @@ Using these, you could define a view that renders to both HTML and JSON like thi
 
     class IndexView(JSONView, HTMLView):
         def get(self, request):
-            # …
+            # ...
             return self.render(request, context, 'index')
 
