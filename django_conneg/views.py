@@ -7,6 +7,7 @@ from django.utils.decorators import classonlymethod
 from django import http
 from django.template import RequestContext
 from django.shortcuts import render_to_response
+from django.utils.cache import patch_vary_headers
 
 from django_conneg.http import MediaType
 from django_conneg.decorators import renderer
@@ -72,12 +73,16 @@ class ContentNegotiatedView(View):
                 if response is NotImplemented:
                     continue
                 response.status_code = status_code
-                return response
             except NotImplementedError:
                 continue
         else:
             tried_mimetypes = list(itertools.chain(*[r.mimetypes for r in request.renderers]))
-            return self.http_not_acceptable(request, tried_mimetypes)
+            response = self.http_not_acceptable(request, tried_mimetypes)
+            
+        # We're doing content-negotiation, so tell the user-agent that the
+        # response will vary depending on the accept header.
+        patch_vary_headers(response, ('Accept',))
+        return response
 
     def http_not_acceptable(self, request, tried_mimetypes, *args, **kwargs):
         tried_mimetypes = ()
