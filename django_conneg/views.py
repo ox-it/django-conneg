@@ -5,7 +5,7 @@ import itertools
 from django.views.generic import View
 from django.utils.decorators import classonlymethod
 from django import http
-from django.template import RequestContext
+from django.template import RequestContext, TemplateDoesNotExist
 from django.shortcuts import render_to_response
 from django.utils.cache import patch_vary_headers
 
@@ -71,17 +71,14 @@ class ContentNegotiatedView(View):
             request.renderers = self.get_renderers(request)
 
         for renderer in request.renderers:
-            try:
-                response = renderer(self, request, context, template_name)
-                if response is NotImplemented:
-                    continue
-                response.status_code = status_code
-            except NotImplementedError:
+            response = renderer(self, request, context, template_name)
+            if response is NotImplemented:
                 continue
+            response.status_code = status_code
         else:
             tried_mimetypes = list(itertools.chain(*[r.mimetypes for r in request.renderers]))
             response = self.http_not_acceptable(request, tried_mimetypes)
-            
+
         # We're doing content-negotiation, so tell the user-agent that the
         # response will vary depending on the accept header.
         patch_vary_headers(response, ('Accept',))
@@ -121,7 +118,10 @@ class HTMLView(ContentNegotiatedView):
     @renderer(format="html", mimetypes=('text/html', 'application/xhtml+xml'), priority=1, name='HTML')
     def render_html(self, request, context, template_name):
         if template_name is None:
-            raise NotImplementedError
-        return render_to_response(template_name+'.html',
-                                  context, context_instance=RequestContext(request),
-                                  mimetype='text/html')
+            return NotImplemented
+        try:
+            return render_to_response(template_name+'.html',
+                                      context, context_instance=RequestContext(request),
+                                      mimetype='text/html')
+        except TemplateDoesNotExist:
+            return NotImplemented
