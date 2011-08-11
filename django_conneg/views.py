@@ -16,6 +16,7 @@ class ContentNegotiatedView(View):
     _renderers_by_format = None
     _renderers_by_mimetype = None
     _default_format = None
+    _force_fallback_format = None
     _format_override_parameter = 'format'
 
     @classonlymethod
@@ -26,7 +27,7 @@ class ContentNegotiatedView(View):
 
         for name in dir(cls):
             value = getattr(cls, name)
-            
+
             if inspect.ismethod(value) and getattr(value, 'is_renderer', False):
                 if value.mimetypes is not None:
                     mimetypes = value.mimetypes
@@ -59,6 +60,8 @@ class ContentNegotiatedView(View):
             renderers = MediaType.resolve(accepts, tuple(self._renderers_by_mimetype.items()))
         elif self._default_format:
             renderers = [self._renderers_by_format[self._default_format]]
+        if self._force_fallback_format:
+            renderers.append(self._renderers_by_format[self._force_fallback_format])
         return renderers
 
     def render(self, request, context, template_name):
