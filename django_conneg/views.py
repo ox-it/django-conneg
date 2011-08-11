@@ -109,7 +109,7 @@ Supported ranges are:
         return media_types
 
     def render_to_format(self, request, context, template_name, format):
-        render_method = self.FORMATS[format]
+        render_method = self._renderers_by_format[format]
         status_code = context.pop('status_code', httplib.OK)
         response = render_method(self, request, context, template_name)
         response.status_code = status_code
