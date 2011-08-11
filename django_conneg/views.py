@@ -165,3 +165,15 @@ if 'json' in locals():
         def render_json(self, request, context, template_name):
             return http.HttpResponse(json.dumps(self.simplify(context)),
                                      mimetype="application/json")
+
+    class JSONPView(JSONView):
+        _default_jsonp_callback_parameter = 'callback'
+        _default_jsonp_callback = 'callback'
+
+        @renderer(format='js', mimetypes=('text/javascript', 'application/javascript'), name='JavaScript (JSONP)')
+        def render_js(self, request, context, template_name):
+            callback_name = request.GET.get(self._default_jsonp_callback_parameter,
+                                            self._default_jsonp_callback)
+
+            return http.HttpResponse('%s(%s);' % (callback_name, json.dumps(self.simplify(context))),
+                                     mimetype="application/javascript")
