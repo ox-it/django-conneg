@@ -77,6 +77,7 @@ class ContentNegotiatedView(View):
             if response is NotImplemented:
                 continue
             response.status_code = status_code
+            break
         else:
             tried_mimetypes = list(itertools.chain(*[r.mimetypes for r in request.renderers]))
             response = self.http_not_acceptable(request, tried_mimetypes)
