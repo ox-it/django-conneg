@@ -168,7 +168,9 @@ if 'json' in locals():
                                      mimetype="application/json")
 
     class JSONPView(JSONView):
+        # The query parameter to look for the callback name
         _default_jsonp_callback_parameter = 'callback'
+        # The default callback name if none is provided
         _default_jsonp_callback = 'callback'
 
         @renderer(format='js', mimetypes=('text/javascript', 'application/javascript'), name='JavaScript (JSONP)')
