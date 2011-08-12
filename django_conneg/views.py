@@ -68,6 +68,7 @@ class ContentNegotiatedView(View):
 
     def render(self, request, context, template_name):
         status_code = context.pop('status_code', httplib.OK)
+        additional_headers = context.pop('additional_headers', {})
 
         if not hasattr(request, 'renderers'):
             request.renderers = self.get_renderers(request)
@@ -81,6 +82,9 @@ class ContentNegotiatedView(View):
         else:
             tried_mimetypes = list(itertools.chain(*[r.mimetypes for r in request.renderers]))
             response = self.http_not_acceptable(request, tried_mimetypes)
+
+        for key, value in additional_headers.iteritems():
+            response[key] = value
 
         # We're doing content-negotiation, so tell the user-agent that the
         # response will vary depending on the accept header.
