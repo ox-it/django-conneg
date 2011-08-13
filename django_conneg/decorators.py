@@ -23,5 +23,6 @@ def renderer(format, mimetypes=(), priority=0, name=None):
         f.format = format
         f.mimetypes = set(MediaType(mimetype, priority) for mimetype in mimetypes)
         f.name = name
+        f.priority = priority
         return f
     return g

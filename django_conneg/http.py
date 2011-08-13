@@ -109,10 +109,12 @@ class MediaType(object):
         # For each equivalence class, find the first renderer MediaType that
         # can handle one of its members, and return the renderer.
         for imts in eq_classes:
-            for provide_type, renderer in provide:
+            for provide_type, provide_renderers in provide:
                 for imt in imts:
-                    if renderer not in seen_renderers and provide_type.provides(imt):
-                        renderers.append(renderer)
-                        seen_renderers.add(renderer)
+                    if provide_type.provides(imt):
+                        for renderer in provide_renderers:
+                            if renderer not in seen_renderers:
+                                renderers.append(renderer)
+                                seen_renderers.add(renderer)
 
         return renderers

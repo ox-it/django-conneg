@@ -15,6 +15,7 @@ from django_conneg.http import MediaType
 from django_conneg.decorators import renderer
 
 class ContentNegotiatedView(View):
+    _renderers = None
     _renderers_by_format = None
     _renderers_by_mimetype = None
     _default_format = None
@@ -26,6 +27,7 @@ class ContentNegotiatedView(View):
 
         renderers_by_format = {}
         renderers_by_mimetype = {}
+        renderers = []
 
         for name in dir(cls):
             value = getattr(cls, name)
@@ -38,10 +40,23 @@ class ContentNegotiatedView(View):
                 else:
                     mimetypes = ()
                 for mimetype in mimetypes:
-                    renderers_by_mimetype[mimetype] = value
-                renderers_by_format[value.format] = value
+                    if mimetype not in renderers_by_mimetype:
+                        renderers_by_mimetype[mimetype] = []
+                    renderers_by_mimetype[mimetype].append(value)
+                if value.format not in renderers_by_format:
+                    renderers_by_format[value.format] = [] 
+                renderers_by_format[value.format].append(value)
+                renderers.append(value)
+        
+        # Order all the renderers by priority
+        renderer_groups = renderers_by_format.values() \
+                        + renderers_by_mimetype.values() \
+                        + [renderers]
+        for renderers in renderer_groups:
+            renderers.sort(key=lambda renderer:-renderer.priority)
 
         initkwargs.update({
+            '_renderers': renderers,
             '_renderers_by_format': renderers_by_format,
             '_renderers_by_mimetype': renderers_by_mimetype,
         })
@@ -56,14 +71,14 @@ class ContentNegotiatedView(View):
             renderers, seen_formats = [], set()
             for format in formats:
                 if format in self._renderers_by_format and format not in seen_formats:
-                    renderers.append(self._renderers_by_format[format])
+                    renderers.extend(self._renderers_by_format[format])
         elif request.META.get('HTTP_ACCEPT'):
             accepts = self.parse_accept_header(request.META['HTTP_ACCEPT'])
             renderers = MediaType.resolve(accepts, tuple(self._renderers_by_mimetype.items()))
         elif self._default_format:
-            renderers = [self._renderers_by_format[self._default_format]]
+            renderers = self._renderers_by_format[self._default_format]
         if self._force_fallback_format:
-            renderers.append(self._renderers_by_format[self._force_fallback_format])
+            renderers.extend(self._renderers_by_format[self._force_fallback_format])
         return renderers
 
     def render(self, request, context, template_name):
