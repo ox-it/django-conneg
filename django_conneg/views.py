@@ -127,10 +127,19 @@ Supported ranges are:
         return media_types
 
     def render_to_format(self, request, context, template_name, format):
-        render_method = self._renderers_by_format[format]
         status_code = context.pop('status_code', httplib.OK)
-        response = render_method(self, request, context, template_name)
+        additional_headers = context.pop('additional_headers', {})
+
+        for renderer in self._renderers_by_format.get(format, ()):
+            response = renderer(self, request, context, template_name)
+            if response is not NotImplemented:
+                break
+        else:
+            response = self.http_not_acceptable(request, ())
+
         response.status_code = status_code
+        for key, value in additional_headers.iteritems():
+            response[key] = value
         return response
 
 class HTMLView(ContentNegotiatedView):
