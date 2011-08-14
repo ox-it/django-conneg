@@ -107,7 +107,6 @@ class ContentNegotiatedView(View):
         return response
 
     def http_not_acceptable(self, request, tried_mimetypes, *args, **kwargs):
-        tried_mimetypes = ()
         response = http.HttpResponse("""\
 Your Accept header didn't contain any supported media ranges.
 
