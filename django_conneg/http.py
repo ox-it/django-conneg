@@ -56,6 +56,8 @@ class MediaType(object):
 
     def __eq__(self, other):
         return self.quality == other.quality and self.type == other.type and self.params == other.params
+    def __hash__(self):
+        return hash(hash(self.quality) + hash(self.type) + hash(tuple(sorted(self.params.iteritems()))))
     def __ne__(self, other):
         return not self.__eq__(other)
     def equivalent(self, other):
