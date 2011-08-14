@@ -141,16 +141,29 @@ Supported ranges are:
         for key, value in additional_headers.iteritems():
             response[key] = value
         return response
+    
+    def join_template_name(self, template_name, extension):
+        """
+        Appends an extension to a template_name or list of template_names.
+        """
+        if template_name is None:
+            return None
+        if isinstance(template_name, (list, tuple)):
+            return tuple('.'.join([n, extension]) for n in template_name)
+        if isinstance(template_name, basestring):
+            return '.'.join([template_name, extension])
+        raise AssertionError('template_name not of correct type: %r' % type(template_name))
 
 class HTMLView(ContentNegotiatedView):
     _default_format = 'html'
 
     @renderer(format="html", mimetypes=('text/html', 'application/xhtml+xml'), priority=1, name='HTML')
     def render_html(self, request, context, template_name):
+        template_name = self.join_template_name(template_name, 'html')
         if template_name is None:
             return NotImplemented
         try:
-            return render_to_response(template_name+'.html',
+            return render_to_response(template_name,
                                       context, context_instance=RequestContext(request),
                                       mimetype='text/html')
         except TemplateDoesNotExist:
@@ -159,10 +172,11 @@ class HTMLView(ContentNegotiatedView):
 class TextView(ContentNegotiatedView):
     @renderer(format="txt", mimetypes=('text/plain',), priority=1, name='Plain text')
     def render_text(self, request, context, template_name):
+        template_name = self.join_template_name(template_name, 'txt')
         if template_name is None:
             return NotImplemented
         try:
-            return render_to_response(template_name+'.txt',
+            return render_to_response(template_name,
                                       context, context_instance=RequestContext(request),
                                       mimetype='text/plain')
         except TemplateDoesNotExist:
