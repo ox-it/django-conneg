@@ -63,6 +63,10 @@ class ContentNegotiatedView(View):
 
         view = super(ContentNegotiatedView, cls).as_view(**initkwargs)
 
+        view._renderers = renderers
+        view._renderers_by_format = renderers_by_format
+        view._renderers_by_mimetype = renderers_by_mimetype
+
         return view
 
     def get_renderers(self, request):
