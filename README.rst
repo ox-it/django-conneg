@@ -101,7 +101,7 @@ Built-in renderer views
 ``django_conneg.views`` module:
 
 * ``HTMLView`` (renders a ``.html`` template with media type ``text/html``)
-* ``TextView`` (renders a ``.html`` template with media type ``text/plain``)
+* ``TextView`` (renders a ``.txt`` template with media type ``text/plain``)
 * ``JSONView`` (coerces the context to JavaScript primitives and returns as ``application/json``)
 * ``JSONPView`` (as ``JSONView``, but wraps in a callback and returns as ``application/javascript``)
 
