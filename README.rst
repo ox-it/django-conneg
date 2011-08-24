@@ -114,3 +114,16 @@ Using these, you could define a view that renders to both HTML and JSON like thi
             # ...
             return self.render(request, context, 'index')
 
+Accessing renderer details
+--------------------------
+
+The renderer used to construct a response is exposed as a ``renderer``
+attribute on the response object::
+
+    class IndexView(JSONView, HTMLView):
+        def get(self, request):
+            # ...
+            response = self.render(request, context, 'index')
+            response['X-Renderer-Format'] = response.renderer.format
+            return response 
+
