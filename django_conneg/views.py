@@ -97,11 +97,12 @@ class ContentNegotiatedView(View):
             if response is NotImplemented:
                 continue
             response.status_code = status_code
+            response.renderer = renderer
             break
         else:
             tried_mimetypes = list(itertools.chain(*[r.mimetypes for r in request.renderers]))
             response = self.http_not_acceptable(request, tried_mimetypes)
-
+            response.renderer = None
         for key, value in additional_headers.iteritems():
             response[key] = value
 
@@ -140,8 +141,10 @@ Supported ranges are:
                 break
         else:
             response = self.http_not_acceptable(request, ())
+            renderer = None
 
         response.status_code = status_code
+        response.renderer = renderer
         for key, value in additional_headers.iteritems():
             response[key] = value
         return response
