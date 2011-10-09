@@ -2,6 +2,7 @@ import datetime
 import httplib
 import inspect
 import itertools
+import logging
 import time
 
 from django.views.generic import View
@@ -13,6 +14,8 @@ from django.utils.cache import patch_vary_headers
 
 from django_conneg.http import MediaType
 from django_conneg.decorators import renderer
+
+logger = logging.getLogger(__name__)
 
 class ContentNegotiatedView(View):
     _renderers = None
@@ -210,19 +213,40 @@ except ImportError:
 # Only define if json is available.
 if 'json' in locals():
     class JSONView(ContentNegotiatedView):
+        _json_indent = 0
+
+        def preprocess_context_for_json(self, context):
+            return context
+
         def simplify(self, value):
             if isinstance(value, datetime.datetime):
                 return time.mktime(value.timetuple()) * 1000
             if isinstance(value, (list, tuple)):
-                return [self.simplify(item) for item in value]
+                items = []
+                for item in value:
+                    item = self.simplify(item)
+                    if item is not NotImplemented:
+                        items.append(item)
+                return items
             if isinstance(value, dict):
-                return dict([(key, self.simplify(value[key])) for key in value])
-            else:
+                items = {}
+                for key, item in value.iteritems():
+                    item = self.simplify(item)
+                    if item is not NotImplemented:
+                        items[key] = item
+                return items
+            elif type(value) in (str, unicode, int, float, long):
                 return value
+            elif value is None:
+                return value
+            else:
+                logger.warning("Failed to simplify object of type %r", type(value))
+                return NotImplemented
 
         @renderer(format='json', mimetypes=('application/json',), name='JSON')
         def render_json(self, request, context, template_name):
-            return http.HttpResponse(json.dumps(self.simplify(context)),
+            context = self.preprocess_context_for_json(context)
+            return http.HttpResponse(json.dumps(self.simplify(context), indent=self._json_indent),
                                      mimetype="application/json")
 
     class JSONPView(JSONView):
@@ -233,8 +257,9 @@ if 'json' in locals():
 
         @renderer(format='js', mimetypes=('text/javascript', 'application/javascript'), name='JavaScript (JSONP)')
         def render_js(self, request, context, template_name):
+            context = self.preprocess_context_for_json(context)
             callback_name = request.GET.get(self._default_jsonp_callback_parameter,
                                             self._default_jsonp_callback)
 
-            return http.HttpResponse('%s(%s);' % (callback_name, json.dumps(self.simplify(context))),
+            return http.HttpResponse('%s(%s);' % (callback_name, json.dumps(self.simplify(context), indent=self._json_indent)),
                                      mimetype="application/javascript")
