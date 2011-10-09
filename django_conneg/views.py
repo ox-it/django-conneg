@@ -121,6 +121,16 @@ Supported ranges are:
         response.status_code = httplib.NOT_ACCEPTABLE
         return response
 
+    def options(self, request, *args, **kwargs):
+        try:
+            response = http.HttpResponse('')
+            response['Accept'] = ','.join(m.upper() for m in sorted(self.http_method_names) if hasattr(self, m))
+            return response
+        except Exception:
+            import traceback
+            traceback.print_exc()
+            raise
+
     @classmethod
     def parse_accept_header(cls, accept):
         media_types = []
