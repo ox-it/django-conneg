@@ -47,16 +47,12 @@ class ContentNegotiatedView(View):
                         renderers_by_mimetype[mimetype] = []
                     renderers_by_mimetype[mimetype].append(value)
                 if value.format not in renderers_by_format:
-                    renderers_by_format[value.format] = [] 
+                    renderers_by_format[value.format] = []
                 renderers_by_format[value.format].append(value)
                 renderers.append(value)
-        
+
         # Order all the renderers by priority
-        renderer_groups = renderers_by_format.values() \
-                        + renderers_by_mimetype.values() \
-                        + [renderers]
-        for renderers in renderer_groups:
-            renderers.sort(key=lambda renderer:-renderer.priority)
+        renderers.sort(key=lambda renderer:-renderer.priority)
 
         initkwargs.update({
             '_renderers': renderers,
@@ -66,10 +62,9 @@ class ContentNegotiatedView(View):
 
         view = super(ContentNegotiatedView, cls).as_view(**initkwargs)
 
-        view._renderers = renderers
+        view._renderers = tuple(renderers)
         view._renderers_by_format = renderers_by_format
         view._renderers_by_mimetype = renderers_by_mimetype
-
         return view
 
     def get_renderers(self, request):
@@ -81,12 +76,12 @@ class ContentNegotiatedView(View):
                     renderers.extend(self._renderers_by_format[format])
         elif request.META.get('HTTP_ACCEPT'):
             accepts = self.parse_accept_header(request.META['HTTP_ACCEPT'])
-            renderers = MediaType.resolve(accepts, tuple(self._renderers_by_mimetype.items()))
+            renderers = MediaType.resolve(accepts, tuple(self._renderers))
         elif self._default_format:
             renderers = self._renderers_by_format[self._default_format]
         if self._force_fallback_format:
             renderers.extend(self._renderers_by_format[self._force_fallback_format])
-        return renderers
+        return tuple(renderers)
 
     def render(self, request, context, template_name):
         status_code = context.pop('status_code', httplib.OK)
@@ -103,7 +98,7 @@ class ContentNegotiatedView(View):
             response.renderer = renderer
             break
         else:
-            tried_mimetypes = list(itertools.chain(*[r.mimetypes for r in request.renderers]))
+            tried_mimetypes = list(itertools.chain(*[r.mimetypes for r in renderers]))
             response = self.http_not_acceptable(request, tried_mimetypes)
             response.renderer = None
         for key, value in additional_headers.iteritems():
@@ -156,7 +151,7 @@ Supported ranges are:
         for key, value in additional_headers.iteritems():
             response[key] = value
         return response
-    
+
     def join_template_name(self, template_name, extension):
         """
         Appends an extension to a template_name or list of template_names.
