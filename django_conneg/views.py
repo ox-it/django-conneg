@@ -47,9 +47,12 @@ class ContentNegotiatedView(View):
                         renderers_by_mimetype[mimetype] = []
                     renderers_by_mimetype[mimetype].append(value)
                 if value.format not in renderers_by_format:
-                    renderers_by_format[value.format] = [] 
+                    renderers_by_format[value.format] = []
                 renderers_by_format[value.format].append(value)
                 renderers.append(value)
+
+        # Order all the renderers by priority
+        renderers.sort(key=lambda renderer:-renderer.priority)
 
         initkwargs.update({
             '_renderers': renderers,
@@ -59,7 +62,7 @@ class ContentNegotiatedView(View):
 
         view = super(ContentNegotiatedView, cls).as_view(**initkwargs)
 
-        view._renderers = renderers
+        view._renderers = tuple(renderers)
         view._renderers_by_format = renderers_by_format
         view._renderers_by_mimetype = renderers_by_mimetype
         return view
@@ -73,12 +76,12 @@ class ContentNegotiatedView(View):
                     renderers.extend(self._renderers_by_format[format])
         elif request.META.get('HTTP_ACCEPT'):
             accepts = self.parse_accept_header(request.META['HTTP_ACCEPT'])
-            renderers = MediaType.resolve(accepts, tuple(self._renderers_by_mimetype.items()))
+            renderers = MediaType.resolve(accepts, tuple(self._renderers))
         elif self._default_format:
             renderers = self._renderers_by_format[self._default_format]
         if self._force_fallback_format:
             renderers.extend(self._renderers_by_format[self._force_fallback_format])
-        return renderers
+        return tuple(renderers)
 
     def render(self, request, context, template_name):
         status_code = context.pop('status_code', httplib.OK)
@@ -87,12 +90,7 @@ class ContentNegotiatedView(View):
         if not hasattr(request, 'renderers'):
             request.renderers = self.get_renderers(request)
 
-        renderers = request.renderers
-        if renderers:
-            #we sort here because the call to get_renderers
-            #returns them unsorted
-            renderers = sorted(renderers, key=lambda r: -r.priority)
-        for renderer in renderers:
+        for renderer in request.renderers:
             response = renderer(self, request, context, template_name)
             if response is NotImplemented:
                 continue
