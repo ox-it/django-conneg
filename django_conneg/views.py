@@ -50,13 +50,6 @@ class ContentNegotiatedView(View):
                     renderers_by_format[value.format] = [] 
                 renderers_by_format[value.format].append(value)
                 renderers.append(value)
-        
-        # Order all the renderers by priority
-        renderer_groups = renderers_by_format.values() \
-                        + renderers_by_mimetype.values() \
-                        + [renderers]
-        for renderers in renderer_groups:
-            renderers.sort(key=lambda renderer:-renderer.priority)
 
         initkwargs.update({
             '_renderers': renderers,
@@ -69,7 +62,6 @@ class ContentNegotiatedView(View):
         view._renderers = renderers
         view._renderers_by_format = renderers_by_format
         view._renderers_by_mimetype = renderers_by_mimetype
-
         return view
 
     def get_renderers(self, request):
@@ -95,7 +87,12 @@ class ContentNegotiatedView(View):
         if not hasattr(request, 'renderers'):
             request.renderers = self.get_renderers(request)
 
-        for renderer in request.renderers:
+        renderers = request.renderers
+        if renderers:
+            #we sort here because the call to get_renderers
+            #returns them unsorted
+            renderers = sorted(renderers, key=lambda r: -r.priority)
+        for renderer in renderers:
             response = renderer(self, request, context, template_name)
             if response is NotImplemented:
                 continue
@@ -103,7 +100,7 @@ class ContentNegotiatedView(View):
             response.renderer = renderer
             break
         else:
-            tried_mimetypes = list(itertools.chain(*[r.mimetypes for r in request.renderers]))
+            tried_mimetypes = list(itertools.chain(*[r.mimetypes for r in renderers]))
             response = self.http_not_acceptable(request, tried_mimetypes)
             response.renderer = None
         for key, value in additional_headers.iteritems():
@@ -156,7 +153,7 @@ Supported ranges are:
         for key, value in additional_headers.iteritems():
             response[key] = value
         return response
-    
+
     def join_template_name(self, template_name, extension):
         """
         Appends an extension to a template_name or list of template_names.
