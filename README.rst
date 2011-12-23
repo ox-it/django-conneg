@@ -133,4 +133,4 @@ Testing
 
 From the root of the repository, run::
 
-    django-admin.py test --settings=django_conneg.test_settings pythonpath=.
+    django-admin.py test --settings=django_conneg.test_settings --pythonpath=.

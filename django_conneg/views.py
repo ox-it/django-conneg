@@ -77,12 +77,12 @@ class ContentNegotiatedView(View):
                     renderers.extend(self._renderers_by_format[format])
         elif request.META.get('HTTP_ACCEPT'):
             accepts = self.parse_accept_header(request.META['HTTP_ACCEPT'])
-            renderers = MediaType.resolve(accepts, self._renderers)
+            renderers = MediaType.resolve(accepts, tuple(self._renderers))
         elif self._default_format:
             renderers = self._renderers_by_format[self._default_format]
         if self._force_fallback_format:
             renderers.extend(self._renderers_by_format[self._force_fallback_format])
-        return renderers
+        return tuple(renderers)
 
     def render(self, request, context, template_name):
         status_code = context.pop('status_code', httplib.OK)
