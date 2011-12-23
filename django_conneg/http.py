@@ -13,7 +13,7 @@ class MediaType(object):
     Represents a parsed internet media type.
     """
 
-    _MEDIA_TYPE_RE = re.compile(r'(\*/\*)|(?P<type>[^/]+)/(\*|((?P<subsubtype>[^+]+)\+)?(?P<subtype>.+))')    
+    _MEDIA_TYPE_RE = re.compile(r'(\*/\*)|(?P<type>[^/]+)/(\*|((?P<subsubtype>[^+]+)\+)?(?P<subtype>.+))')
     def __init__(self, value, priority=0):
         value = unicode(value).strip()
         media_type = value.split(';')
@@ -41,16 +41,16 @@ class MediaType(object):
     def __gt__(self, other):
         if self.quality != other.quality:
             return self.quality > other.quality
-        
+
         if self.specifity != other.specifity:
             return self.specifity > other.specifity
-        
+
         for key in other.params:
             if self.params.get(key) != other.params[key]:
                 return False
-        
+
         return len(self.params) > len(other.params)
-    
+
     def __lt__(self, other):
         return other > self
 
@@ -86,37 +86,35 @@ class MediaType(object):
         text/html provides text/*, but not application/xhtml+xml or application/html
         """
         return self.type[:imt.specifity] == imt.type[:imt.specifity]
-        
+
     @classmethod
-    def resolve(cls, accept, provide):
+    def resolve(cls, accept, available_renderers):
         """
         Resolves a list of accepted MediaTypes and available renderers to the preferred renderer.
 
-        Call as MediaType.resolve([MediaType], [(MediaType, renderer)]).
+        Call as MediaType.resolve([MediaType], [renderer]).
         """
-        assert isinstance(provide, tuple)
-        accept.sort()
-        eq_classes, accept = [[accept[-1]]], accept[:-1]
+        assert isinstance(available_renderers, tuple)
+        accept = sorted(accept)
 
-        # Group the accepted types into equivalence classes
-        while accept:
-            imt = accept.pop()
-            if imt.equivalent(eq_classes[0][-1]):
-                eq_classes[-1].append(imt)
+        renderers, seen = [], set()
+
+        accept_groups = [[accept.pop()]]
+        for imt in accept:
+            if imt.equivalent(accept_groups[-1][0]):
+                accept_groups[-1].append(imt)
             else:
-                eq_classes.append([imt])
+                accept_groups.append([imt])
 
-        renderers, seen_renderers = [], set()
-
-        # For each equivalence class, find the first renderer MediaType that
-        # can handle one of its members, and return the renderer.
-        for imts in eq_classes:
-            for provide_type, provide_renderers in provide:
-                for imt in imts:
-                    if provide_type.provides(imt):
-                        for renderer in provide_renderers:
-                            if renderer not in seen_renderers:
-                                renderers.append(renderer)
-                                seen_renderers.add(renderer)
+        for accept_group in accept_groups:
+            for renderer in available_renderers:
+                if renderer in seen:
+                    continue
+                for mimetype in renderer.mimetypes:
+                    for imt in accept_group:
+                        if mimetype.provides(imt):
+                            renderers.append(renderer)
+                            seen.add(renderer)
+                            break
 
         return renderers
