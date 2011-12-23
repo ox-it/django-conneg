@@ -53,6 +53,7 @@ class ContentNegotiatedView(View):
 
         # Order all the renderers by priority
         renderers.sort(key=lambda renderer:-renderer.priority)
+        renderers = tuple(renderers)
 
         initkwargs.update({
             '_renderers': renderers,
@@ -62,7 +63,7 @@ class ContentNegotiatedView(View):
 
         view = super(ContentNegotiatedView, cls).as_view(**initkwargs)
 
-        view._renderers = tuple(renderers)
+        view._renderers = renderers
         view._renderers_by_format = renderers_by_format
         view._renderers_by_mimetype = renderers_by_mimetype
 
