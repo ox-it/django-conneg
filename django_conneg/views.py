@@ -5,6 +5,7 @@ import itertools
 import logging
 import time
 
+from django.conf import settings
 from django.views.generic import View
 from django.utils.decorators import classonlymethod
 from django import http
@@ -24,6 +25,8 @@ class ContentNegotiatedView(View):
     _default_format = None
     _force_fallback_format = None
     _format_override_parameter = 'format'
+    _override_priority = None
+
 
     @classonlymethod
     def as_view(cls, **initkwargs):
@@ -31,6 +34,8 @@ class ContentNegotiatedView(View):
         renderers_by_format = {}
         renderers_by_mimetype = {}
         renderers = []
+
+        cls.set_priority_overrides()
 
         for name in dir(cls):
             value = getattr(cls, name)
@@ -70,6 +75,7 @@ class ContentNegotiatedView(View):
         return view
 
     def get_renderers(self, request):
+        renderers = []
         if 'format' in request.REQUEST:
             formats = request.REQUEST[self._format_override_parameter].split(',')
             renderers, seen_formats = [], set()
@@ -125,6 +131,28 @@ Supported ranges are:
         response = http.HttpResponse()
         response['Accept'] = ','.join(m.upper() for m in sorted(self.http_method_names) if hasattr(self, m))
         return response
+
+    def head(self, request, *args, **kwargs):
+        return self.get(request, *args, **kwargs)
+
+    @classonlymethod
+    def set_priority_overrides(cls):
+        if not cls._override_priority:
+            val = getattr(settings, 'CONNEG_OVERRIDE_PRIORITY', None)
+            cls._override_priority = val
+
+        if not cls._override_priority:
+            return
+
+        overrides = dict(cls._override_priority)
+        renderers = filter(lambda v: getattr(v, 'is_renderer', False),
+            (cls.__dict__.itervalues()))
+
+        for r in renderers:
+            if r.format in overrides.keys():
+                val = overrides[r.format]
+                if isinstance(val, int):
+                    setattr(r, 'priority', val)
 
     @classmethod
     def parse_accept_header(cls, accept):

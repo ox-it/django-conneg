@@ -161,6 +161,30 @@ By default, ``django-conneg``'s built-in renderers have a priority of 0, except
 for ``HTMLView`` and ``TextView``, which each have a priority of 1 for the
 reason given above.
 
+Overriding priorities
+---------------------
+
+Priorities for renderers can be changed either setting a site-wide parameter, or setting a custom
+attribute in a given class View. Both must be a tuple of the form ``((format, priority),)``. For instance,
+the following is a valid settings entry:: 
+
+    CONNEG_OVERRIDE_PRIORITY = (
+              ('html', 1),
+              ('json', 2),
+              ('xml', 3),
+              ('plain', 4)
+              )
+
+And the following is a custom class override, which takes precedence over the former::
+
+    class SampleContentNegView(RDFaView, HTMLView, JSONView):
+	_override_priority = (
+		('html', 4),
+		('json', 3),
+		('xml', 2),
+		('plain', 1)
+		)
+
 
 Running the tests
 -----------------
