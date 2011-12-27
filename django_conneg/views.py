@@ -75,6 +75,7 @@ class ContentNegotiatedView(View):
         return view
 
     def get_renderers(self, request):
+        renderers = []
         if 'format' in request.REQUEST:
             formats = request.REQUEST[self._format_override_parameter].split(',')
             renderers, seen_formats = [], set()
