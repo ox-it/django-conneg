@@ -64,7 +64,7 @@ setup(
     description="An implementation of content-negotiating class-based views for Django",
     author='Oxford University Computing Services',
     author_email='infodev@oucs.ox.ac.uk',
-    version='0.5',
+    version='0.6',
     packages=packages,
     license='BSD',
     url='https://github.com/oucs/django-conneg',
