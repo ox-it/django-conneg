@@ -69,8 +69,17 @@ class ContentNegotiatedView(View):
 
         return view
 
+    def dispatch(self, request, *args, **kwargs):
+        self.set_renderers(request)
+        return super(ContentNegotiatedView, self).dispatch(request, *args, **kwargs)
+
+    def set_renderers(self, request):
+        if getattr(request, 'renderers_for_view', None) != self:
+            request.renderers = self.get_renderers(request)
+            request.renderers_for_view = self
+
     def get_renderers(self, request):
-        if 'format' in request.REQUEST:
+        if self._format_override_parameter in request.REQUEST:
             formats = request.REQUEST[self._format_override_parameter].split(',')
             renderers, seen_formats = [], set()
             for format in formats:
@@ -81,6 +90,8 @@ class ContentNegotiatedView(View):
             renderers = MediaType.resolve(accepts, self._renderers)
         elif self._default_format:
             renderers = self._renderers_by_format[self._default_format]
+        else:
+            renderers = []
         if self._force_fallback_format:
             renderers.extend(self._renderers_by_format[self._force_fallback_format])
         return renderers
@@ -89,8 +100,7 @@ class ContentNegotiatedView(View):
         status_code = context.pop('status_code', httplib.OK)
         additional_headers = context.pop('additional_headers', {})
 
-        if not hasattr(request, 'renderers'):
-            request.renderers = self.get_renderers(request)
+        self.set_renderers(request)
 
         for renderer in request.renderers:
             response = renderer(self, request, context, template_name)
