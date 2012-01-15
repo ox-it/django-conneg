@@ -70,15 +70,34 @@ class ContentNegotiatedView(View):
         return view
 
     def dispatch(self, request, *args, **kwargs):
+        # This is handy for the view to work out what renderers will
+        # be attempted, and to manipulate the list if necessary.
+        # Also handy for middleware to check whether the view was a
+        # ContentNegotiatedView, and which renderers were preferred.
         self.set_renderers(request)
         return super(ContentNegotiatedView, self).dispatch(request, *args, **kwargs)
 
     def set_renderers(self, request):
+        """
+        Makes sure that the renderers attribute on the request is up
+        to date. renderers_for_view keeps track of the view that
+        is attempting to render the request, so that if the request
+        has been delegated to another view we know to recalculate
+        the applicable renderers. When called multiple times on the
+        same view this will be very low-cost for subsequent calls.
+        """
         if getattr(request, 'renderers_for_view', None) != self:
             request.renderers = self.get_renderers(request)
             request.renderers_for_view = self
 
     def get_renderers(self, request):
+        """
+        Returns a list of renderer functions in the order they should be tried.
+        
+        Tries the format override parameter first, then the Accept header. If
+        neither is present, attempt to fall back to self._default_format. If
+        a fallback format has been specified, we try that last.
+        """
         if self._format_override_parameter in request.REQUEST:
             formats = request.REQUEST[self._format_override_parameter].split(',')
             renderers, seen_formats = [], set()
@@ -97,6 +116,15 @@ class ContentNegotiatedView(View):
         return renderers
 
     def render(self, request, context, template_name):
+        """
+        Returns a HttpResponse of the right media type as specified by the
+        request.
+        
+        context can contain status_code and additional_headers members, to set
+        the HTTP status code and headers of the request, respectively.
+        template_name should lack a file-type suffix (e.g. '.html', as
+        renderers will append this as necessary.
+        """
         status_code = context.pop('status_code', httplib.OK)
         additional_headers = context.pop('additional_headers', {})
 
