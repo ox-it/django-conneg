@@ -1,0 +1,4 @@
+You need to be authenticated to perform this request.
+
+See the WWW-Authenticate header for more details about supported
+authentication schemes.

@@ -1,0 +1,12 @@
+{% extends "conneg/base.html" %}
+
+{% block title %}Unauthorized{% endblock %}
+
+{% block content %}
+  <h1>Unauthorized</h1>
+  
+  <p>You need to be authenticated to perform this request.</p>
+
+  <p>See the WWW-Authenticate header for more details about supported
+authentication schemes.</p>
+{% endblock %}
