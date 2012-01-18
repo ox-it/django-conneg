@@ -25,6 +25,10 @@ class BasicAuthMiddleware(object):
         if request.user.is_authenticated():
             return
 
+        # Don't do anything for unsecure requests, unless DEBUG is on
+        if not request.is_secure() and not settings.DEBUG:
+            return
+
         # Parse the username and password out of the Authorization
         # HTTP header and set request.user if we find an active user.
         # We don't use auth.login, as the authorization is only valid
@@ -44,6 +48,10 @@ class BasicAuthMiddleware(object):
 
     def process_response(self, request, response):
         process = False
+
+        # Don't do anything for unsecure requests, unless DEBUG is on
+        if not request.is_secure() and not settings.DEBUG:
+            return response
 
         if response.status_code == 401:
             process = True
