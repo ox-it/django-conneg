@@ -265,7 +265,7 @@ if 'json' in locals():
                     if item is not NotImplemented:
                         items[key] = item
                 return items
-            elif type(value) in (str, unicode, int, float, long):
+            elif type(value) in (str, unicode, int, float, long, bool):
                 return value
             elif value is None:
                 return value
