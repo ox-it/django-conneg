@@ -19,6 +19,8 @@ class BasicAuthMiddleware(object):
     request, and turns @login_required redirects into 401 responses.
     """
 
+    allow_http = getattr(settings, 'BASIC_AUTH_ALLOW_HTTP', False) or settings.DEBUG
+
     unauthorized_view = staticmethod(UnauthorizedView.as_view())
     def process_request(self, request):
         # Ignore if user already authenticated
@@ -26,7 +28,7 @@ class BasicAuthMiddleware(object):
             return
 
         # Don't do anything for unsecure requests, unless DEBUG is on
-        if not request.is_secure() and not settings.DEBUG:
+        if not self.allow_http and not request.is_secure():
             return
 
         # Parse the username and password out of the Authorization
@@ -50,7 +52,7 @@ class BasicAuthMiddleware(object):
         process = False
 
         # Don't do anything for unsecure requests, unless DEBUG is on
-        if not request.is_secure() and not settings.DEBUG:
+        if not self.allow_http and not request.is_secure():
             return response
 
         if response.status_code == 401:
