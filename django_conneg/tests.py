@@ -63,7 +63,7 @@ class PriorityTestCase(unittest.TestCase):
             test_view = self.getTestView(priorities).as_view()
 
             renderer_priorities = [renderer.priority for renderer in test_view._renderers]
-            self.assertSequenceEqual(renderer_priorities, sorted(renderer_priorities, reverse=True))
+            self.assertEqual(renderer_priorities, sorted(renderer_priorities, reverse=True))
 
 
 

@@ -1,5 +1,6 @@
 INSTALLED_APPS = (
     'django_conneg',
+    'django_jenkins',
 )
 
-TEST_RUNNER = 'django_conneg.tests.DatabaselessTestSuiteRunner'
+DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3'}}
