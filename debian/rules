@@ -9,8 +9,14 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
+export DISTUTILS_ARGS=--root=debian/python-django-conneg \
+                      --install-layout=deb
+
 %:
-	dh $@ 
+	dh $@ --with python2
+
+override_dh_auto_install:
+	python setup.py install ${DISTUTILS_ARGS}
 
 override_dh_auto_test:
 	make tox
