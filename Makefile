@@ -10,7 +10,7 @@ clean-debian-package:
 	rm -rf debian-package
 
 test:
-	django-admin.py test --settings=django_conneg.test_settings --pythonpath=.
+	django-admin test --settings=django_conneg.test_settings --pythonpath=.
 
 tox:
 	tox
