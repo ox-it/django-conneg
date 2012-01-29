@@ -18,5 +18,3 @@ export DISTUTILS_ARGS=--root=debian/python-django-conneg \
 override_dh_auto_install:
 	python setup.py install ${DISTUTILS_ARGS}
 
-override_dh_auto_test:
-	make tox
