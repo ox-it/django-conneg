@@ -4,6 +4,17 @@ Content-negotiation framework for Django
 This project provides a simple and extensible framework for producing views
 that content-negotiate in Django.
 
+Prerequisites
+-------------
+
+This library depends on Django 1.3, which you can install using your package
+manager on recent distributions, or using pip::
+
+    pip install -r requirements.txt
+
+``pip`` is called ``pip-python`` on Fedora. It is generally provided by a
+``python-pip`` package.
+
 Using
 -----
 
@@ -168,4 +179,7 @@ Running the tests
 ``django-conneg`` has a modest test suite. To run it, head to the root of the
 repository and run::
 
-    django-admin.py test --settings=django_conneg.test_settings --pythonpath=.
+    django-admin test --settings=django_conneg.test_settings --pythonpath=.
+
+If you don't have Django, you'll need to install it as detailed in the
+Prerequisites section above.
