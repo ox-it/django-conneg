@@ -6,3 +6,7 @@
 override_dh_auto_test:
 	django-admin test --settings=django_conneg.test_settings --pythonpath=.
 
+overridge_dh_clean:
+	dh_clean
+	rm -rf build
+
