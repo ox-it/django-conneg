@@ -244,7 +244,7 @@ except ImportError:
 # Only define if json is available.
 if 'json' in locals():
     class JSONView(ContentNegotiatedView):
-        _json_indent = 0
+        _json_indent = 2
 
         def preprocess_context_for_json(self, context):
             return context
