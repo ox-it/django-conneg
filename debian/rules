@@ -1,20 +1,12 @@
 #!/usr/bin/make -f
-# -*- makefile -*-
-# Sample debian/rules that uses debhelper.
-# This file was originally written by Joey Hess and Craig Small.
-# As a special exception, when this file is copied by dh-make into a
-# dh-make output file, you may use that output file without restriction.
-# This special exception was added by Craig Small in version 0.37 of dh-make.
-
-# Uncomment this to turn on verbose mode.
-#export DH_VERBOSE=1
-
-export DISTUTILS_ARGS=--root=debian/python-django-conneg \
-                      --install-layout=deb
 
 %:
 	dh $@ --with python2
 
-override_dh_auto_install:
-	python setup.py install ${DISTUTILS_ARGS}
+override_dh_auto_test:
+	django-admin test --settings=django_conneg.test_settings --pythonpath=.
+
+overridge_dh_clean:
+	dh_clean
+	rm -rf build
 
