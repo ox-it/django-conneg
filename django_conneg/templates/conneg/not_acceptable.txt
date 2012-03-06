@@ -1,0 +1,22 @@
+Not Acceptable
+  
+Of the media types specified in your request, none is supported as a response
+type. This resource supports the following response formats:
+  
+Format name  | Format identifier  | Associated mimetypes
+-------------+--------------------+-------------------------------------------{% for renderer in error.available_renderers %}
+{{ renderer.name|ljust:12 }} | {{ renderer.format|ljust:18 }} | {{ renderer.mimetypes|join:", " }}{% endfor %}
+  
+You can specify a media type using the Accept header, or by providing a
+{{ error.format_parameter_name }} parameter in the query string or request body, containing a single - or
+comma-separated list of - format identifiers.
+  
+For this request, you provided the following <tt>Accept</tt> header:</p>
+  
+  {{ error.accept_header }}
+  
+The site interpreted this to mean that we should attempt to return
+serializations in the following order:
+{% for mediatype in error.accept_header_parsed %}
+  {{ forloop.counter|rjust:2 }}. {{ mediatype }}{% endfor %}
+  

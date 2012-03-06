@@ -1,0 +1,39 @@
+{% extends "conneg/base.html" %}
+
+{% block title %}Not Acceptable{% endblock %}
+
+{% block content %}
+  <h1>Not Acceptable</h1>
+  
+  <p>Of the media types specified in your request, none is supported as a response type. This resource supports the following response formats:</p>
+  
+  <table>
+    <thead>
+      <tr>
+        <th>Format name</th>
+        <th>Format identifier</th>
+        <th>Associated mimetypes</th>
+      </tr>
+    </thead>
+    <tbody>{% for renderer in error.available_renderers %}
+      <tr>
+        <td>{{ renderer.name }}</td>
+        <td><tt>{{ renderer.format }}</tt></td>
+        <td>{% for mimetype in renderer.mimetypes %}<tt>{{ mimetype }}</tt>{% if not forloop.last %}, {% endif %}{% endfor%}</td>
+      </tr>{% endfor %}
+    </tbody>
+  </table>
+  
+  <p>You can specify a media type using the <tt>Accept</tt> header, or by providing a <tt>{{ error.format_parameter_name }}</tt> parameter in the query string or request body, containing a single &mdash; or comma-separated list of &mdash; format identifiers.</p>
+  
+  <p>For this request, you provided the following <tt>Accept</tt> header:</p>
+  
+  <blockquote><tt>{{ error.accept_header }}</tt></blockquote>
+  
+  <p>The site interpreted this to mean that we should attempt to return serializations in the following order:</p>
+  
+  <ol>{% for mediatype in error.accept_header_parsed %}
+    <li><tt>{{ mediatype }}</tt></li>{% endfor %}
+  </ol>
+  
+{% endblock %}

@@ -8,6 +8,10 @@ class HttpResponseSeeOther(HttpResponseRedirect):
 class HttpResponseTemporaryRedirect(HttpResponseRedirect):
     status_code = 307
 
+class HttpNotAcceptable(Exception):
+    def __init__(self, tried_mimetypes):
+        self.tried_mimetypes = tried_mimetypes
+
 class MediaType(object):
     """
     Represents a parsed internet media type.
