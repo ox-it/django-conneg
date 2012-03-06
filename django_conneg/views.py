@@ -303,6 +303,9 @@ class ErrorView(HTMLView, JSONPView, TextView):
 
 class ErrorCatchingView(ContentNegotiatedView):
     error_view = staticmethod(ErrorView.as_view())
+    error_template_names = {httplib.NOT_FOUND: ('conneg/not_found', '404'),
+                            httplib.FORBIDDEN: ('conneg/forbidden', '403'),
+                            httplib.NOT_ACCEPTABLE: ('conneg/not_acceptable',)}
 
     def dispatch(self, request, *args, **kwargs):
         try:
@@ -330,11 +333,15 @@ class ErrorCatchingView(ContentNegotiatedView):
     def error_403(self, request, exception, *args, **kwargs):
         context = {'error': {'status_code': httplib.FORBIDDEN,
                              'message': exception.message or None}}
-        return self.error_view(request, context, 'conneg/forbidden')
+        return self.error_view(request, context,
+                               self.error_template_names[httplib.FORBIDDEN])
+
     def error_404(self, request, exception, *args, **kwargs):
         context = {'error': {'status_code': httplib.NOT_FOUND,
                              'message': exception.message or None}}
-        return self.error_view(request, context, ('conneg/not_found', '400'))
+        return self.error_view(request, context,
+                               self.error_template_names[httplib.NOT_FOUND])
+
     def error_406(self, request, exception, *args, **kwargs):
         accept_header_parsed = self.parse_accept_header(request.META.get('HTTP_ACCEPT', ''))
         accept_header_parsed.sort(reverse=True)
@@ -349,6 +356,10 @@ class ErrorCatchingView(ContentNegotiatedView):
                              'format_parameter_parsed': request.REQUEST.get(self._format_override_parameter, '').split(','),
                              'accept_header': request.META.get('HTTP_ACCEPT'),
                              'accept_header_parsed': accept_header_parsed}}
-        return self.error_view(request, context, 'conneg/not_acceptable')
+        return self.error_view(request, context,
+                               self.error_template_names[httplib.NOT_ACCEPTABLE])
+
     def error_500(self, request, exception, *args, **kwargs):
+        # Be careful overriding this; you could well lose error-reporting.
+        # Much better to set handler500 in your urlconf.
         raise exception

@@ -173,6 +173,44 @@ for ``HTMLView`` and ``TextView``, which each have a priority of 1 for the
 reason given above.
 
 
+Improved 40x response handling
+------------------------------
+
+Django provides a couple of useful exceptions, ``Http404`` and
+``PermissionDenied``, which you may want to use in your application. However,
+it's only possible to customise the 404 site-wide (either by providing a
+``404.html`` template, or by setting ``handler404`` in your urlconf), and
+until Django 1.4 comes out, PermissionDenied will always result in a very
+spartan error page.
+
+``django-conneg`` provides an ``ErrorCatchingView`` which you can use as a
+mixin to customise the rendering of responses for these error situations::
+
+    from django_conneg.views import HTMLView, ErrorCatchingView
+
+    class IndexView(HTMLView, ErrorCatchingView):
+        # ...
+
+You can then customise error responses in one of the following ways:
+
+ * overriding the ``conneg/(forbidden|not_found|not_acceptable).(html|txt) templates
+ * overriding ``error_403``, ``error_404`` or ``error_406`` methods on the view
+ * overriding the ``error_template_names`` attribute to specify a non-standard template name:
+
+In the latter case, you can do something like::
+
+    import httplib
+    from django.util.datastructures import MergeDict
+    from django_conneg.views import HTMLView, ErrorCatchingView
+
+    class IndexView(HTMLView, ErrorCatchingView):
+        # Provide a view-specific 404 page. Use MergeDict to use django_conneg's
+        # defaults for other types of errors.
+        error_template_names = MergeDict({httplib.NOT_FOUND: 'foo/404'},
+                                         ErrorCatchingView.error_template_names)
+        # ...
+
+
 Running the tests
 -----------------
 
