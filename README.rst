@@ -193,9 +193,9 @@ mixin to customise the rendering of responses for these error situations::
 
 You can then customise error responses in one of the following ways:
 
- * overriding the ``conneg/(forbidden|not_found|not_acceptable).(html|txt) templates
- * overriding ``error_403``, ``error_404`` or ``error_406`` methods on the view
- * overriding the ``error_template_names`` attribute to specify a non-standard template name:
+* overriding the ``conneg/(forbidden|not_found|not_acceptable).(html|txt) templates
+* overriding ``error_403``, ``error_404`` or ``error_406`` methods on the view
+* overriding the ``error_template_names`` attribute to specify a non-standard template name:
 
 In the latter case, you can do something like::
 
