@@ -1,3 +1,10 @@
+python-django-conneg (0.7.2) unstable; urgency=low
+
+  * Exception messages are now passed through to the template by
+    ErrorCatchingView and displayed appropriately.
+
+ -- Alexander Dutton <alexander.dutton@oucs.ox.ac.uk>  Tue, 6 Mar 2012 13:56:44 +0000
+
 python-django-conneg (0.7.1) unstable; urgency=low
 
   * Added ErrorCatchingView for providing content-negotiated responses to
