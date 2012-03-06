@@ -1,4 +1,4 @@
-python-django-conneg (0.7) unstable; urgency=low
+python-django-conneg (0.7.1) unstable; urgency=low
 
   * Added ErrorCatchingView for providing content-negotiated responses to
     common error scenarios.
