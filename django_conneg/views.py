@@ -328,10 +328,12 @@ class ErrorCatchingView(ContentNegotiatedView):
             raise exception
 
     def error_403(self, request, exception, *args, **kwargs):
-        context = {'error': {'status_code': httplib.FORBIDDEN}}
+        context = {'error': {'status_code': httplib.FORBIDDEN,
+                             'message': exception.message or None}}
         return self.error_view(request, context, 'conneg/forbidden')
     def error_404(self, request, exception, *args, **kwargs):
-        context = {'error': {'status_code': httplib.NOT_FOUND}}
+        context = {'error': {'status_code': httplib.NOT_FOUND,
+                             'message': exception.message or None}}
         return self.error_view(request, context, ('conneg/not_found', '400'))
     def error_406(self, request, exception, *args, **kwargs):
         accept_header_parsed = self.parse_accept_header(request.META.get('HTTP_ACCEPT', ''))

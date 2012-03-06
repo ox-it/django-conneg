@@ -6,4 +6,6 @@
   <h1>Forbidden</h1>
   
   <p>Access to this resource is forbidden.</p>
+
+  {% if error.message %}<p>{{ error.message }}</p>{% endif %}
 {% endblock %}

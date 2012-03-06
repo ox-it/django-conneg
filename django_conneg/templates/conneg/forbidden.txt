@@ -1,1 +1,3 @@
-Access to this resource is forbidden.
+Access to this resource is forbidden.{% if error.message %}
+
+{{ error.message }}{% endif %}
