@@ -1,3 +1,11 @@
+python-django-conneg (0.7) unstable; urgency=low
+
+  * Added ErrorCatchingView for providing content-negotiated responses to
+    common error scenarios.
+  * JSONView now indents two spaces by default.
+
+ -- Alexander Dutton <alexander.dutton@oucs.ox.ac.uk>  Tue, 6 Mar 2012 11:44:21 +0000
+
 python-django-conneg (0.6) unstable; urgency=low
 
   * Fixed renderer priority handling
