@@ -1,3 +1,9 @@
+python-django-conneg (0.7.3) unstable; urgency=low
+
+  * Template names in ErrorCatchingView are now configurable.
+
+ -- Alexander Dutton <alexander.dutton@oucs.ox.ac.uk>  Tue, 6 Mar 2012 14:52:12 +0000
+
 python-django-conneg (0.7.2) unstable; urgency=low
 
   * Exception messages are now passed through to the template by
