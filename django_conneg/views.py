@@ -365,4 +365,4 @@ class ErrorCatchingView(ContentNegotiatedView):
     def error_500(self, request, exception, *args, **kwargs):
         # Be careful overriding this; you could well lose error-reporting.
         # Much better to set handler500 in your urlconf.
-        raise exception
+        raise
