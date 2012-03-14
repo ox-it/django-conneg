@@ -112,8 +112,11 @@ class ContentNegotiatedView(View):
             renderers = self._renderers_by_format[self._default_format]
         else:
             renderers = []
-        if self._force_fallback_format:
-            renderers.extend(self._renderers_by_format[self._force_fallback_format])
+
+        fallback_formats = self._force_fallback_format or ()
+        fallback_formats = fallback_formats if isinstance(fallback_formats, (list, tuple)) else (fallback_formats,)
+        for format in fallback_formats:
+            renderers.extend(self._renderers_by_format[format])
         return renderers
 
     def render(self, request, context, template_name):
@@ -296,7 +299,7 @@ if 'json' in locals():
                                      mimetype="application/javascript")
 
 class ErrorView(HTMLView, JSONPView, TextView):
-    _force_fallback_format = 'html'
+    _force_fallback_format = ('html', 'json')
     def dispatch(self, request, context, template_name):
         context['status_code'] = context['error']['status_code']
         return self.render(request, context, template_name)
