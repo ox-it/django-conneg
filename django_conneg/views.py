@@ -163,6 +163,15 @@ Supported ranges are:
         response.status_code = httplib.NOT_ACCEPTABLE
         return response
 
+    def head(self, request, *args, **kwargs):
+        handle_get = getattr(self, 'get', None)
+        if handle_get:
+            response = handle_get(request, *args, **kwargs)
+            response.content = ''
+            return response
+        else:
+            return self.http_method_not_allowed(request, *args, **kwargs)
+
     def options(self, request, *args, **kwargs):
         response = http.HttpResponse()
         response['Accept'] = ','.join(m.upper() for m in sorted(self.http_method_names) if hasattr(self, m))
