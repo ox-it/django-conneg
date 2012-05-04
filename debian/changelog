@@ -3,6 +3,7 @@ python-django-conneg (0.7.4) unstable; urgency=low
   * Fixed the raise statement in error_500 so that the original traceback is
     preserved.
   * Allow multiple fallback formats.
+  * Added support for HEAD requests.
 
  -- Alexander Dutton <alexander.dutton@oucs.ox.ac.uk>  Fri, 4 May 2012 14:08:39 +0100
 
