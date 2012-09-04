@@ -70,6 +70,10 @@ class Conneg(object):
         for format in fallback_formats:
             renderers.extend(self.renderers_by_format[format])
 
+        if context is not None and template_name:
+            renderers = [r for r in renderers if not hasattr(r, 'test')
+                                              or r.test(r.__self__, request, context, template_name)]
+
         return renderers
 
     def __add__(self, other):

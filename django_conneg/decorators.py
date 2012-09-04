@@ -1,6 +1,6 @@
 from http import MediaType
 
-def renderer(format, mimetypes=(), priority=0, name=None):
+def renderer(format, mimetypes=(), priority=0, name=None, test=None):
     """
     Decorates a view method to say that it renders a particular format and mimetypes.
 
@@ -24,5 +24,7 @@ def renderer(format, mimetypes=(), priority=0, name=None):
         f.mimetypes = set(MediaType(mimetype, priority) for mimetype in mimetypes)
         f.name = name
         f.priority = priority
+        if test:
+            f.test = test
         return f
     return g
