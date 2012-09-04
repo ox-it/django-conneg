@@ -4,6 +4,7 @@ import inspect
 import itertools
 import logging
 import time
+import warnings
 
 from django.core import exceptions
 from django.views.generic import View
@@ -179,13 +180,8 @@ Supported ranges are:
 
     @classmethod
     def parse_accept_header(cls, accept):
-        media_types = []
-        for media_type in accept.split(','):
-            try:
-                media_types.append(MediaType(media_type))
-            except ValueError:
-                pass
-        return media_types
+        warnings.warn("The parse_accept_header method has moved to django_conneg.http.MediaType")
+        return MediaType.parse_accept_header(accept)
 
     def render_to_format(self, request, context, template_name, format):
         status_code = context.pop('status_code', httplib.OK)

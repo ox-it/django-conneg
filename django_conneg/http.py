@@ -122,3 +122,13 @@ class MediaType(object):
                             break
 
         return renderers
+
+    @classmethod
+    def parse_accept_header(cls, accept):
+        media_types = []
+        for media_type in accept.split(','):
+            try:
+                media_types.append(MediaType(media_type))
+            except ValueError:
+                pass
+        return media_types
