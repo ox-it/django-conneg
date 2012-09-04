@@ -4,6 +4,8 @@ import inspect
 import itertools
 import logging
 import time
+import urllib
+import urlparse
 import warnings
 
 from django.core import exceptions
@@ -14,72 +16,37 @@ from django.template import RequestContext, TemplateDoesNotExist
 from django.shortcuts import render_to_response
 from django.utils.cache import patch_vary_headers
 
-from django_conneg.http import MediaType, HttpNotAcceptable
+from django_conneg.conneg import Conneg
 from django_conneg.decorators import renderer
+from django_conneg.http import MediaType, HttpNotAcceptable
 
 logger = logging.getLogger(__name__)
 
 class ContentNegotiatedView(View):
+    conneg = None
+    context = None
     _renderers = None
     _renderers_by_format = None
     _renderers_by_mimetype = None
     _default_format = None
     _force_fallback_format = None
     _format_override_parameter = 'format'
+    
+    template_name = None
 
-    @classonlymethod
-    def as_view(cls, **initkwargs):
-
-        renderers_by_format = {}
-        renderers_by_mimetype = {}
-        renderers = []
-
-        for name in dir(cls):
-            value = getattr(cls, name)
-
-            if inspect.ismethod(value) and getattr(value, 'is_renderer', False):
-                if value.mimetypes is not None:
-                    mimetypes = value.mimetypes
-                elif value.format in renderers_by_format:
-                    mimetypes = renderers_by_format[value.format].mimetypes
-                else:
-                    mimetypes = ()
-                for mimetype in mimetypes:
-                    if mimetype not in renderers_by_mimetype:
-                        renderers_by_mimetype[mimetype] = []
-                    renderers_by_mimetype[mimetype].append(value)
-                if value.format not in renderers_by_format:
-                    renderers_by_format[value.format] = []
-                renderers_by_format[value.format].append(value)
-                renderers.append(value)
-
-        # Order all the renderers by priority
-        renderers.sort(key=lambda renderer:-renderer.priority)
-        renderers = tuple(renderers)
-
-        initkwargs.update({
-            '_renderers': renderers,
-            '_renderers_by_format': renderers_by_format,
-            '_renderers_by_mimetype': renderers_by_mimetype,
-        })
-
-        view = super(ContentNegotiatedView, cls).as_view(**initkwargs)
-
-        view._renderers = renderers
-        view._renderers_by_format = renderers_by_format
-        view._renderers_by_mimetype = renderers_by_mimetype
-
-        return view
 
     def dispatch(self, request, *args, **kwargs):
         # This is handy for the view to work out what renderers will
         # be attempted, and to manipulate the list if necessary.
         # Also handy for middleware to check whether the view was a
         # ContentNegotiatedView, and which renderers were preferred.
+        if self.context is None:
+            self.context = {}
+        self.conneg = Conneg(obj=self)
         self.set_renderers(request)
         return super(ContentNegotiatedView, self).dispatch(request, *args, **kwargs)
 
-    def set_renderers(self, request):
+    def set_renderers(self, request=None, context=None, template_name=None):
         """
         Makes sure that the renderers attribute on the request is up
         to date. renderers_for_view keeps track of the view that
@@ -88,39 +55,37 @@ class ContentNegotiatedView(View):
         the applicable renderers. When called multiple times on the
         same view this will be very low-cost for subsequent calls.
         """
-        if getattr(request, 'renderers_for_view', None) != self:
-            request.renderers = self.get_renderers(request)
-            request.renderers_for_view = self
+        request, context, template_name = self.get_render_params(request, context, template_name)
 
-    def get_renderers(self, request):
-        """
-        Returns a list of renderer functions in the order they should be tried.
-        
-        Tries the format override parameter first, then the Accept header. If
-        neither is present, attempt to fall back to self._default_format. If
-        a fallback format has been specified, we try that last.
-        """
-        if self._format_override_parameter in request.REQUEST:
-            formats = request.REQUEST[self._format_override_parameter].split(',')
-            renderers, seen_formats = [], set()
-            for format in formats:
-                if format in self._renderers_by_format and format not in seen_formats:
-                    renderers.extend(self._renderers_by_format[format])
-        elif request.META.get('HTTP_ACCEPT'):
-            accepts = self.parse_accept_header(request.META['HTTP_ACCEPT'])
-            renderers = MediaType.resolve(accepts, self._renderers)
-        elif self._default_format:
-            renderers = self._renderers_by_format[self._default_format]
-        else:
-            renderers = []
+        args = (self.conneg, context, template_name,
+                self._default_format, self._force_fallback_format, self._format_override_parameter)
+        if getattr(request, 'renderers_for_args', None) != args:
+            fallback_formats = self._force_fallback_format or ()
+            if not isinstance(fallback_formats, (list, tuple)):
+                fallback_formats = (fallback_formats,)
+            if self._format_override_parameter in request.REQUEST:
+                format_override = request.REQUEST[self._format_override_parameter].split(',')
+            else:
+                format_override = None
+            request.renderers = self.conneg.get_renderers(request=request,
+                                                          context=context,
+                                                          template_name=template_name,
+                                                          accept_header=request.META.get('HTTP_ACCEPT'),
+                                                          formats=format_override,
+                                                          default_format=self._default_format,
+                                                          fallback_formats=fallback_formats)
+            request.renderers_for_view = args
+        self.context['renderers'] = [self.renderer_for_context(request, r) for r in request.renderers]
+        return request.renderers
 
-        fallback_formats = self._force_fallback_format or ()
-        fallback_formats = fallback_formats if isinstance(fallback_formats, (list, tuple)) else (fallback_formats,)
-        for format in fallback_formats:
-            renderers.extend(self._renderers_by_format[format])
-        return renderers
+    def get_render_params(self, request, context, template_name):
+        if not template_name:
+            template_name = self.template_name
+            if template_name.endswith('.html'):
+                template_name = template_name[:-5]
+        return request or self.request, context or self.context, template_name
 
-    def render(self, request, context, template_name):
+    def render(self, request=None, context=None, template_name=None):
         """
         Returns a HttpResponse of the right media type as specified by the
         request.
@@ -130,13 +95,15 @@ class ContentNegotiatedView(View):
         template_name should lack a file-type suffix (e.g. '.html', as
         renderers will append this as necessary.
         """
+        request, context, template_name = self.get_render_params(request, context, template_name)
+
+        self.set_renderers()
+
         status_code = context.pop('status_code', httplib.OK)
         additional_headers = context.pop('additional_headers', {})
 
-        self.set_renderers(request)
-
         for renderer in request.renderers:
-            response = renderer(self, request, context, template_name)
+            response = renderer(request, context, template_name)
             if response is NotImplemented:
                 continue
             response.status_code = status_code
@@ -160,7 +127,7 @@ Your Accept header didn't contain any supported media ranges.
 
 Supported ranges are:
 
- * %s\n""" % '\n * '.join(sorted('%s (%s; %s)' % (f.name, ", ".join(m.value for m in f.mimetypes), f.format) for f in self._renderers if not any(m in tried_mimetypes for m in f.mimetypes))), mimetype="text/plain")
+ * %s\n""" % '\n * '.join(sorted('%s (%s; %s)' % (f.name, ", ".join(m.value for m in f.mimetypes), f.format) for f in request.renderers if not any(m in tried_mimetypes for m in f.mimetypes))), mimetype="text/plain")
         response.status_code = httplib.NOT_ACCEPTABLE
         return response
 
@@ -183,12 +150,15 @@ Supported ranges are:
         warnings.warn("The parse_accept_header method has moved to django_conneg.http.MediaType")
         return MediaType.parse_accept_header(accept)
 
-    def render_to_format(self, request, context, template_name, format):
+    def render_to_format(self, request=None, context=None, template_name=None, format=None):
+        request, context, template_name = self.get_render_params(request, context, template_name)
+        self.set_renderers()
+
         status_code = context.pop('status_code', httplib.OK)
         additional_headers = context.pop('additional_headers', {})
 
-        for renderer in self._renderers_by_format.get(format, ()):
-            response = renderer(self, request, context, template_name)
+        for renderer in self.conneg.renderers_by_format.get(format, ()):
+            response = renderer(request, context, template_name)
             if response is not NotImplemented:
                 break
         else:
@@ -212,6 +182,18 @@ Supported ranges are:
         if isinstance(template_name, basestring):
             return '.'.join([template_name, extension])
         raise AssertionError('template_name not of correct type: %r' % type(template_name))
+
+    def renderer_for_context(self, request, renderer):
+        return {'name': renderer.name,
+                'priority': renderer.priority,
+                'mimetypes': [m.value for m in renderer.mimetypes],
+                'format': renderer.format,
+                'url': self.url_for_format(request, renderer.format)}
+
+    def url_for_format(self, request, format):
+        qs = urlparse.parse_qs(request.META.get('QUERY_STRING', ''))
+        qs['format'] = [format]
+        return '?{0}'.format(urllib.urlencode(qs, True))
 
 class HTMLView(ContentNegotiatedView):
     _default_format = 'html'
