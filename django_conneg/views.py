@@ -239,7 +239,9 @@ if 'json' in locals():
         def preprocess_context_for_json(self, context):
             return context
 
-        def simplify(self, value):
+        def simplify_for_json(self, value):
+            if inspect.ismethod(getattr(value, 'simplify_for_json', None)):
+                return value.simplify_for_json(self.simplify_for_json)
             if isinstance(value, datetime.datetime):
                 return time.mktime(value.timetuple()) * 1000
             if isinstance(value, (list, tuple)):
@@ -264,10 +266,14 @@ if 'json' in locals():
                 logger.warning("Failed to simplify object of type %r", type(value))
                 return NotImplemented
 
+        def simplify(self, value):
+            warnings.warn("JSONView.simplify() has been renamed to simplify_for_json")
+            return self.simplify_for_json(value)
+
         @renderer(format='json', mimetypes=('application/json',), name='JSON')
         def render_json(self, request, context, template_name):
             context = self.preprocess_context_for_json(context)
-            return http.HttpResponse(json.dumps(self.simplify(context), indent=self._json_indent),
+            return http.HttpResponse(json.dumps(self.simplify_for_json(context), indent=self._json_indent),
                                      mimetype="application/json")
 
     class JSONPView(JSONView):
