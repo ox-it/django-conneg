@@ -30,7 +30,7 @@ class Conneg(object):
         self.renderers_by_format = defaultdict(list)
         self.renderers_by_mimetype = defaultdict(list)
 
-        if renderers:
+        if renderers is not None:
             renderers = list(renderers)
         elif obj:
             cls = type(obj)
