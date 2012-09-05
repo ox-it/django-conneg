@@ -81,7 +81,7 @@ class ContentNegotiatedView(View):
     def get_render_params(self, request, context, template_name):
         if not template_name:
             template_name = self.template_name
-            if template_name.endswith('.html'):
+            if isinstance(template_name, basestring) and template_name.endswith('.html'):
                 template_name = template_name[:-5]
         return request or self.request, context or self.context, template_name
 
