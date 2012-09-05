@@ -4,6 +4,25 @@ import weakref
 
 from django_conneg.http import MediaType
 
+class Renderer(object):
+    def __init__(self, func, format, mimetypes=(), priority=0, name=None, test=None, instance=None, owner=None):
+        self.func = func
+        self.test = test or (lambda s,r,c,t: True)
+        if instance:
+            self.func = func.__get__(instance, owner)
+            self.test = test.__get__(instance, owner)
+
+        self.is_renderer = True
+        self.format = format
+        self.mimetypes = set(MediaType(mimetype, priority) for mimetype in mimetypes)
+        self.name = name
+        self.priority = priority
+
+    def __get__(self, instance, owner=None):
+        return Renderer(self.func, self.format, self.mimetypes, self.priority, self.name, self.test, instance, owner)
+    def __call__(self, *args, **kwargs):
+        return self.func(*args, **kwargs)
+
 class Conneg(object):
     _memo_by_class = weakref.WeakKeyDictionary()
 
@@ -25,7 +44,7 @@ class Conneg(object):
                         value = getattr(obj, name)
                     except AttributeError:
                         continue
-                    if inspect.ismethod(value) and getattr(value, 'is_renderer', False):
+                    if isinstance(value, Renderer):
                         renderers.append(value)
                 self._memo_by_class[cls] = renderers
 
@@ -71,8 +90,7 @@ class Conneg(object):
             renderers.extend(self.renderers_by_format[format])
 
         if context is not None and template_name:
-            renderers = [r for r in renderers if not hasattr(r, 'test')
-                                              or r.test(r.__self__, request, context, template_name)]
+            renderers = [r for r in renderers if r.test(request, context, template_name)]
 
         return renderers
 

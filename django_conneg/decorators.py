@@ -1,4 +1,4 @@
-from http import MediaType
+from django_conneg.conneg import Renderer
 
 def renderer(format, mimetypes=(), priority=0, name=None, test=None):
     """
@@ -19,12 +19,5 @@ def renderer(format, mimetypes=(), priority=0, name=None, test=None):
     """
 
     def g(f):
-        f.is_renderer = True
-        f.format = format
-        f.mimetypes = set(MediaType(mimetype, priority) for mimetype in mimetypes)
-        f.name = name
-        f.priority = priority
-        if test:
-            f.test = test
-        return f
+        return Renderer(f, format, mimetypes, priority, name, test)
     return g
