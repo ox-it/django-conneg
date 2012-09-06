@@ -18,10 +18,20 @@ class Renderer(object):
         self.name = name
         self.priority = priority
 
+        self.is_bound = instance is not None
+
     def __get__(self, instance, owner=None):
         return Renderer(self.func, self.format, self.mimetypes, self.priority, self.name, self.test, instance, owner)
     def __call__(self, *args, **kwargs):
         return self.func(*args, **kwargs)
+
+    def __repr__(self):
+        if self.is_bound:
+            return "<bound renderer {0}.{1} of {2}>".format(self.func.im_class.__name__ or '?',
+                                                            self.func.__name__,
+                                                            self.func.__self__)
+        else:
+            return "<unbound renderer {0}>".format(self.func.__name__)
 
 class Conneg(object):
     _memo_by_class = weakref.WeakKeyDictionary()
