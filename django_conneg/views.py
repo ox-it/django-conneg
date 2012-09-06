@@ -68,7 +68,7 @@ class BaseContentNegotiatedView(View):
             fallback_formats = self._force_fallback_format or ()
             if not isinstance(fallback_formats, (list, tuple)):
                 fallback_formats = (fallback_formats,)
-            if self._format_override_parameter in request.REQUEST:
+            if request.REQUEST.get(self._format_override_parameter):
                 format_override = request.REQUEST[self._format_override_parameter].split(',')
             else:
                 format_override = None
