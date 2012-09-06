@@ -35,7 +35,7 @@ class PriorityTestCase(unittest.TestCase):
 
     def testEqualQuality(self):
         accept_header = ', '.join(self.mimetypes)
-        accept = views.ContentNegotiatedView.parse_accept_header(accept_header)
+        accept = http.MediaType.parse_accept_header(accept_header)
 
         for mimetypes in itertools.permutations(self.mimetypes):
             renderers = tuple(self.getRenderer(str(i), mimetype, str(i), -i) for i, mimetype in enumerate(mimetypes))
@@ -47,12 +47,12 @@ class PriorityTestCase(unittest.TestCase):
 
     def testEqualQualityView(self):
         accept_header = ', '.join(self.mimetypes)
-        accept = views.ContentNegotiatedView.parse_accept_header(accept_header)
+        accept = http.MediaType.parse_accept_header(accept_header)
 
         for mimetypes in itertools.permutations(self.mimetypes):
             priorities = dict((mimetype, -i) for i, mimetype in enumerate(mimetypes))
             test_view = self.getTestView(priorities).as_view()
-            renderers = http.MediaType.resolve(accept, test_view._renderers)
+            renderers = http.MediaType.resolve(accept, test_view.conneg.renderers)
 
             for renderer, mimetype in zip(renderers, mimetypes):
                 self.assertEqual(iter(renderer.mimetypes).next(), http.MediaType(mimetype))
@@ -62,7 +62,7 @@ class PriorityTestCase(unittest.TestCase):
             priorities = dict((mimetype, -i) for i, mimetype in enumerate(mimetypes))
             test_view = self.getTestView(priorities).as_view()
 
-            renderer_priorities = [renderer.priority for renderer in test_view._renderers]
+            renderer_priorities = [renderer.priority for renderer in test_view.conneg.renderers]
             self.assertEqual(renderer_priorities, sorted(renderer_priorities, reverse=True))
 
 

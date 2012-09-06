@@ -249,7 +249,7 @@ class ContentNegotiatedView(BaseContentNegotiatedView):
                                self.error_template_names[httplib.NOT_FOUND])
 
     def error_406(self, request, exception, *args, **kwargs):
-        accept_header_parsed = self.parse_accept_header(request.META.get('HTTP_ACCEPT', ''))
+        accept_header_parsed = MediaType.parse_accept_header(request.META.get('HTTP_ACCEPT', ''))
         accept_header_parsed.sort(reverse=True)
         accept_header_parsed = map(unicode, accept_header_parsed)
         context = {'error': {'status_code': httplib.NOT_ACCEPTABLE,
