@@ -80,7 +80,7 @@ class BaseContentNegotiatedView(View):
                                                           default_format=self._default_format,
                                                           fallback_formats=fallback_formats)
             request.renderers_for_view = args
-        self.context['renderers'] = [self.renderer_for_context(request, r) for r in request.renderers]
+        self.context['renderers'] = [self.renderer_for_context(request, r) for r in self.conneg.renderers]
         return request.renderers
 
     def get_render_params(self, request, context, template_name):
