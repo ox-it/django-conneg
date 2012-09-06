@@ -43,7 +43,7 @@ class Conneg(object):
         if renderers is not None:
             renderers = list(renderers)
         elif obj:
-            cls = type(obj)
+            cls = type(obj) if not isinstance(obj, type) else obj
             renderers = self._memo_by_class.get(cls)
             if renderers is None:
                 # This is about as much memoization as we can do. We keep
@@ -60,7 +60,7 @@ class Conneg(object):
 
             # Bind the renderers to this instance. See
             # http://stackoverflow.com/a/1015405/613023 for an explanation.
-            renderers = [r.__get__(obj) for r in renderers]
+            renderers = [r.__get__(obj, cls) for r in renderers]
 
         for renderer in renderers:
             if renderer.mimetypes is not None:
