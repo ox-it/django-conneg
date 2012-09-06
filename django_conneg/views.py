@@ -22,29 +22,34 @@ from django_conneg.http import MediaType, HttpNotAcceptable
 
 logger = logging.getLogger(__name__)
 
-class ContentNegotiatedView(View):
+class BaseContentNegotiatedView(View):
     conneg = None
     context = None
-    _renderers = None
-    _renderers_by_format = None
-    _renderers_by_mimetype = None
     _default_format = None
     _force_fallback_format = None
     _format_override_parameter = 'format'
     
     template_name = None
 
+    @classonlymethod
+    def as_view(cls, **initkwargs):
+        view = super(BaseContentNegotiatedView, cls).as_view(**initkwargs)
+        view.conneg = Conneg(obj=cls)
+        return view
 
     def dispatch(self, request, *args, **kwargs):
         # This is handy for the view to work out what renderers will
         # be attempted, and to manipulate the list if necessary.
         # Also handy for middleware to check whether the view was a
-        # ContentNegotiatedView, and which renderers were preferred.
+        # BaseContentNegotiatedView, and which renderers were preferred.
         if self.context is None:
             self.context = {}
+        self.request = request
+        self.args = args
+        self.kwargs = kwargs
         self.conneg = Conneg(obj=self)
         self.set_renderers(request)
-        return super(ContentNegotiatedView, self).dispatch(request, *args, **kwargs)
+        return super(BaseContentNegotiatedView, self).dispatch(request, *args, **kwargs)
 
     def set_renderers(self, request=None, context=None, template_name=None):
         """
@@ -195,6 +200,76 @@ Supported ranges are:
         qs['format'] = [format]
         return '?{0}'.format(urllib.urlencode(qs, True))
 
+
+
+class ContentNegotiatedView(BaseContentNegotiatedView):
+    @property
+    def error_view(self):
+        if not hasattr(self, '_error_view'):
+            self._error_view = ErrorView.as_view()
+        return self._error_view
+
+    error_template_names = {httplib.NOT_FOUND: ('conneg/not_found', '404'),
+                            httplib.FORBIDDEN: ('conneg/forbidden', '403'),
+                            httplib.NOT_ACCEPTABLE: ('conneg/not_acceptable',)}
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            return super(ContentNegotiatedView, self).dispatch(request, *args, **kwargs)
+        except http.Http404, e:
+            return self.error(request, e, args, kwargs, httplib.NOT_FOUND)
+        except exceptions.PermissionDenied, e:
+            return self.error(request, e, args, kwargs, httplib.FORBIDDEN)
+        except HttpNotAcceptable, e:
+            return self.error(request, e, args, kwargs, httplib.NOT_ACCEPTABLE)
+        except Exception, e:
+            return self.error(request, e, args, kwargs, httplib.INTERNAL_SERVER_ERROR)
+
+    def http_not_acceptable(self, request, tried_mimetypes, *args, **kwargs):
+        raise HttpNotAcceptable(tried_mimetypes)
+
+    def error(self, request, exception, args, kwargs, status_code):
+        method_name = 'error_%d' % status_code
+        method = getattr(self, method_name, None)
+        if callable(method):
+            return method(request, exception, *args, **kwargs)
+        else:
+            raise exception
+
+    def error_403(self, request, exception, *args, **kwargs):
+        context = {'error': {'status_code': httplib.FORBIDDEN,
+                             'message': exception.message or None}}
+        return self.error_view(request, context,
+                               self.error_template_names[httplib.FORBIDDEN])
+
+    def error_404(self, request, exception, *args, **kwargs):
+        context = {'error': {'status_code': httplib.NOT_FOUND,
+                             'message': exception.message or None}}
+        return self.error_view(request, context,
+                               self.error_template_names[httplib.NOT_FOUND])
+
+    def error_406(self, request, exception, *args, **kwargs):
+        accept_header_parsed = self.parse_accept_header(request.META.get('HTTP_ACCEPT', ''))
+        accept_header_parsed.sort(reverse=True)
+        accept_header_parsed = map(unicode, accept_header_parsed)
+        context = {'error': {'status_code': httplib.NOT_ACCEPTABLE,
+                             'tried_mimetypes': exception.tried_mimetypes,
+                             'available_renderers': [self.renderer_for_context(request, r) for r in self.conneg.renderers],
+                             'format_parameter_name': self._format_override_parameter,
+                             'format_parameter': request.REQUEST.get(self._format_override_parameter),
+                             'format_parameter_parsed': request.REQUEST.get(self._format_override_parameter, '').split(','),
+                             'accept_header': request.META.get('HTTP_ACCEPT'),
+                             'accept_header_parsed': accept_header_parsed}}
+        return self.error_view(request, context,
+                               self.error_template_names[httplib.NOT_ACCEPTABLE])
+
+    def error_500(self, request, exception, *args, **kwargs):
+        # Be careful overriding this; you could well lose error-reporting.
+        # Much better to set handler500 in your urlconf.
+        raise
+
+ErrorCatchingView = ContentNegotiatedView
+
 class HTMLView(ContentNegotiatedView):
     _default_format = 'html'
 
@@ -293,69 +368,9 @@ if 'json' in locals():
 
 class ErrorView(HTMLView, JSONPView, TextView):
     _force_fallback_format = ('html', 'json')
-    def dispatch(self, request, context, template_name):
+    def get(self, request, context, template_name):
+        self.context.update(context)
+        self.template_name = template_name
         context['status_code'] = context['error']['status_code']
-        return self.render(request, context, template_name)
-
-class ErrorCatchingView(ContentNegotiatedView):
-    error_view = staticmethod(ErrorView.as_view())
-    error_template_names = {httplib.NOT_FOUND: ('conneg/not_found', '404'),
-                            httplib.FORBIDDEN: ('conneg/forbidden', '403'),
-                            httplib.NOT_ACCEPTABLE: ('conneg/not_acceptable',)}
-
-    def dispatch(self, request, *args, **kwargs):
-        try:
-            return super(ErrorCatchingView, self).dispatch(request, *args, **kwargs)
-        except http.Http404, e:
-            return self.error(request, e, args, kwargs, httplib.NOT_FOUND)
-        except exceptions.PermissionDenied, e:
-            return self.error(request, e, args, kwargs, httplib.FORBIDDEN)
-        except HttpNotAcceptable, e:
-            return self.error(request, e, args, kwargs, httplib.NOT_ACCEPTABLE)
-        except Exception, e:
-            return self.error(request, e, args, kwargs, httplib.INTERNAL_SERVER_ERROR)
-
-    def http_not_acceptable(self, request, tried_mimetypes, *args, **kwargs):
-        raise HttpNotAcceptable(tried_mimetypes)
-
-    def error(self, request, exception, args, kwargs, status_code):
-        method_name = 'error_%d' % status_code
-        method = getattr(self, method_name, None)
-        if callable(method):
-            return method(request, exception, *args, **kwargs)
-        else:
-            raise exception
-
-    def error_403(self, request, exception, *args, **kwargs):
-        context = {'error': {'status_code': httplib.FORBIDDEN,
-                             'message': exception.message or None}}
-        return self.error_view(request, context,
-                               self.error_template_names[httplib.FORBIDDEN])
-
-    def error_404(self, request, exception, *args, **kwargs):
-        context = {'error': {'status_code': httplib.NOT_FOUND,
-                             'message': exception.message or None}}
-        return self.error_view(request, context,
-                               self.error_template_names[httplib.NOT_FOUND])
-
-    def error_406(self, request, exception, *args, **kwargs):
-        accept_header_parsed = self.parse_accept_header(request.META.get('HTTP_ACCEPT', ''))
-        accept_header_parsed.sort(reverse=True)
-        accept_header_parsed = map(unicode, accept_header_parsed)
-        context = {'error': {'status_code': httplib.NOT_ACCEPTABLE,
-                             'tried_mimetypes': exception.tried_mimetypes,
-                             'available_renderers': [{'format': renderer.format,
-                                                      'mimetypes': map(unicode, renderer.mimetypes),
-                                                      'name': renderer.name} for renderer in self._renderers],
-                             'format_parameter_name': self._format_override_parameter,
-                             'format_parameter': request.REQUEST.get(self._format_override_parameter),
-                             'format_parameter_parsed': request.REQUEST.get(self._format_override_parameter, '').split(','),
-                             'accept_header': request.META.get('HTTP_ACCEPT'),
-                             'accept_header_parsed': accept_header_parsed}}
-        return self.error_view(request, context,
-                               self.error_template_names[httplib.NOT_ACCEPTABLE])
-
-    def error_500(self, request, exception, *args, **kwargs):
-        # Be careful overriding this; you could well lose error-reporting.
-        # Much better to set handler500 in your urlconf.
-        raise
+        return self.render()
+    post = delete = put = get
