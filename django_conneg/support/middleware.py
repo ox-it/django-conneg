@@ -8,10 +8,13 @@ from django_conneg.views import HTMLView, JSONPView, TextView
 
 class UnauthorizedView(HTMLView, JSONPView, TextView):
     _force_fallback_format = 'txt'
-    def dispatch(self, request):
-        context = {'status_code': httplib.UNAUTHORIZED,
-                   'error': 'You need to be authenticated to perform this request.'}
-        return self.render(request, context, 'conneg/unauthorized')
+    template_name = 'conneg/unauthorized'
+
+    def get(self, request):
+        self.context.update({'status_code': httplib.UNAUTHORIZED,
+                             'error': 'You need to be authenticated to perform this request.'})
+        return self.render()
+    post = put = delete = get
 
 class BasicAuthMiddleware(object):
     """
