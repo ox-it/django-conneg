@@ -233,6 +233,9 @@ class ContentNegotiatedView(BaseContentNegotiatedView):
         method = getattr(self, method_name, None)
         if callable(method):
             return method(request, exception, *args, **kwargs)
+        elif all(sys.exc_info()):
+            exc_type, exc_value, exc_tb = sys.exc_info()
+            raise exc_type, exc_value, exc_tb
         else:
             raise exception
 
