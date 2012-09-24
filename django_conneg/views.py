@@ -325,14 +325,14 @@ if 'json' in locals():
             if isinstance(value, (list, tuple)):
                 items = []
                 for item in value:
-                    item = self.simplify(item)
+                    item = self.simplify_for_json(item)
                     if item is not NotImplemented:
                         items.append(item)
                 return items
             if isinstance(value, dict):
                 items = {}
                 for key, item in value.iteritems():
-                    item = self.simplify(item)
+                    item = self.simplify_for_json(item)
                     if item is not NotImplemented:
                         items[key] = item
                 return items
@@ -366,7 +366,7 @@ if 'json' in locals():
             callback_name = request.GET.get(self._default_jsonp_callback_parameter,
                                             self._default_jsonp_callback)
 
-            return http.HttpResponse('%s(%s);' % (callback_name, json.dumps(self.simplify(context), indent=self._json_indent)),
+            return http.HttpResponse('%s(%s);' % (callback_name, json.dumps(self.simplify_for_json(context), indent=self._json_indent)),
                                      mimetype="application/javascript")
 
 class ErrorView(HTMLView, JSONPView, TextView):
