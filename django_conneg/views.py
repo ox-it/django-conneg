@@ -334,7 +334,7 @@ if 'json' in locals():
                 for key, item in value.iteritems():
                     item = self.simplify_for_json(item)
                     if item is not NotImplemented:
-                        items[key] = item
+                        items[unicode(key)] = item
                 return items
             elif type(value) in (str, unicode, int, float, long, bool):
                 return value
