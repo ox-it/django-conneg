@@ -374,6 +374,6 @@ class ErrorView(HTMLView, JSONPView, TextView):
     def get(self, request, context, template_name):
         self.context.update(context)
         self.template_name = template_name
-        context['status_code'] = context['error']['status_code']
+        self.context['status_code'] = context['error']['status_code']
         return self.render()
     post = delete = put = get
