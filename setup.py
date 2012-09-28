@@ -2,6 +2,8 @@ from distutils.core import setup
 from distutils.command.install import INSTALL_SCHEMES
 import os
 
+from django_conneg import __version__
+
 #################################
 # BEGIN borrowed from Django    #
 # licensed under the BSD        #
@@ -64,7 +66,7 @@ setup(
     description="An implementation of content-negotiating class-based views for Django",
     author='Oxford University Computing Services',
     author_email='infodev@oucs.ox.ac.uk',
-    version='0.7.4',
+    version=__version__,
     packages=packages,
     license='BSD',
     url='https://github.com/oucs/django-conneg',

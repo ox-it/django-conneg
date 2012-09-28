@@ -1,3 +1,20 @@
+python-django-conneg (0.8) unstable; urgency=low
+
+  * Tidied some methods into better places and added deprecation warnings.
+  * Added test param to renderer decorator to give an indication of whether a
+    particular renderer will succeed.
+  * renderer decorator now creates callable Renderer objects
+  * Lists of renderers can now be combined
+  * Some conneg stuff factored out from views into new conneg.Conneg class
+  * ErrorCatchingView now default behaviour; provides default templates for
+    403 and 404 errors in HTML, JSON and plain text
+  * Undocumented attributes view._renderers{,_by_mimetype,_by_format} now
+    available as view.conneg.renderers[…]
+  * renderer details now placed in context (useful for links to other formats
+    when creating templates)
+
+ -- Alexander Dutton <alexander.dutton@oucs.ox.ac.uk>  Fri, 28 Sep 2012 13:08:01 +0100
+
 python-django-conneg (0.7.4) unstable; urgency=low
 
   * Fixed the raise statement in error_500 so that the original traceback is
