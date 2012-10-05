@@ -222,8 +222,6 @@ class ContentNegotiatedView(BaseContentNegotiatedView):
             return self.error(request, e, args, kwargs, httplib.FORBIDDEN)
         except HttpNotAcceptable, e:
             return self.error(request, e, args, kwargs, httplib.NOT_ACCEPTABLE)
-        except Exception, e:
-            return self.error(request, e, args, kwargs, httplib.INTERNAL_SERVER_ERROR)
 
     def http_not_acceptable(self, request, tried_mimetypes, *args, **kwargs):
         raise HttpNotAcceptable(tried_mimetypes)
@@ -266,11 +264,7 @@ class ContentNegotiatedView(BaseContentNegotiatedView):
         return self.error_view(request, context,
                                self.error_template_names[httplib.NOT_ACCEPTABLE])
 
-    def error_500(self, request, exception, *args, **kwargs):
-        # Be careful overriding this; you could well lose error-reporting.
-        # Much better to set handler500 in your urlconf.
-        raise
-
+# For backwards compatibility
 ErrorCatchingView = ContentNegotiatedView
 
 class HTMLView(ContentNegotiatedView):
