@@ -19,6 +19,7 @@ from django.utils.cache import patch_vary_headers
 from django_conneg.conneg import Conneg
 from django_conneg.decorators import renderer
 from django_conneg.http import MediaType, HttpNotAcceptable
+from django_conneg.utils import utc
 
 logger = logging.getLogger(__name__)
 
@@ -315,6 +316,8 @@ if 'json' in locals():
             if inspect.ismethod(getattr(value, 'simplify_for_json', None)):
                 return value.simplify_for_json(self.simplify_for_json)
             if isinstance(value, datetime.datetime):
+                if value.tzinfo:
+                    value = value.astimezone(utc)
                 return time.mktime(value.timetuple()) * 1000
             if isinstance(value, (list, tuple)):
                 items = []
