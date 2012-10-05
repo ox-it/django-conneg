@@ -43,7 +43,7 @@ class BaseContentNegotiatedView(View):
         # Also handy for middleware to check whether the view was a
         # BaseContentNegotiatedView, and which renderers were preferred.
         if self.context is None:
-            self.context = {}
+            self.context = {'additional_headers': {}}
         self.request = request
         self.args = args
         self.kwargs = kwargs
