@@ -8,9 +8,19 @@ class HttpResponseSeeOther(HttpResponseRedirect):
 class HttpResponseTemporaryRedirect(HttpResponseRedirect):
     status_code = 307
 
-class HttpNotAcceptable(Exception):
+class HttpError(Exception):
+    def __init__(self, status_code=None, message=None):
+        if status_code:
+            self.status_code = status_code
+        super(HttpError, self).__init__(message)
+
+class HttpNotAcceptable(HttpError):
+    status_code = 406
     def __init__(self, tried_mimetypes):
         self.tried_mimetypes = tried_mimetypes
+
+class HttpBadRequest(HttpError):
+    status_code = 400
 
 class MediaType(object):
     """

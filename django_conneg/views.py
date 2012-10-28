@@ -3,6 +3,7 @@ import httplib
 import inspect
 import itertools
 import logging
+import sys
 import time
 import urllib
 import urlparse
@@ -18,7 +19,7 @@ from django.utils.cache import patch_vary_headers
 
 from django_conneg.conneg import Conneg
 from django_conneg.decorators import renderer
-from django_conneg.http import MediaType, HttpNotAcceptable
+from django_conneg.http import MediaType, HttpError, HttpNotAcceptable
 from django_conneg.utils import utc
 
 logger = logging.getLogger(__name__)
@@ -212,7 +213,8 @@ class ContentNegotiatedView(BaseContentNegotiatedView):
 
     error_template_names = {httplib.NOT_FOUND: ('conneg/not_found', '404'),
                             httplib.FORBIDDEN: ('conneg/forbidden', '403'),
-                            httplib.NOT_ACCEPTABLE: ('conneg/not_acceptable',)}
+                            httplib.NOT_ACCEPTABLE: ('conneg/not_acceptable',),
+                            httplib.BAD_REQUEST: ('conneg/bad_request', '400')}
 
     def dispatch(self, request, *args, **kwargs):
         try:
@@ -221,8 +223,8 @@ class ContentNegotiatedView(BaseContentNegotiatedView):
             return self.error(request, e, args, kwargs, httplib.NOT_FOUND)
         except exceptions.PermissionDenied, e:
             return self.error(request, e, args, kwargs, httplib.FORBIDDEN)
-        except HttpNotAcceptable, e:
-            return self.error(request, e, args, kwargs, httplib.NOT_ACCEPTABLE)
+        except HttpError, e:
+            return self.error(request, e, args, kwargs, e.status_code)
 
     def http_not_acceptable(self, request, tried_mimetypes, *args, **kwargs):
         raise HttpNotAcceptable(tried_mimetypes)
@@ -230,25 +232,22 @@ class ContentNegotiatedView(BaseContentNegotiatedView):
     def error(self, request, exception, args, kwargs, status_code):
         method_name = 'error_%d' % status_code
         method = getattr(self, method_name, None)
+
+        # See if we've got a dedicated handler for this status code
         if callable(method):
             return method(request, exception, *args, **kwargs)
+        # Otherwise, if it's an HttpError, try to render it to an
+        # appropriate template
+        elif isinstance(exception, HttpError) and status_code in self.error_template_names:
+            context = {'error': {'status_code': status_code,
+                                 'message': exception.message or None}}
+            return self.error_view(request, context,
+                                   self.error_template_names[status_code])
+        # Otherwise, try to re-raise the blighter
         elif all(sys.exc_info()):
-            exc_type, exc_value, exc_tb = sys.exc_info()
-            raise exc_type, exc_value, exc_tb
+            raise
         else:
             raise exception
-
-    def error_403(self, request, exception, *args, **kwargs):
-        context = {'error': {'status_code': httplib.FORBIDDEN,
-                             'message': exception.message or None}}
-        return self.error_view(request, context,
-                               self.error_template_names[httplib.FORBIDDEN])
-
-    def error_404(self, request, exception, *args, **kwargs):
-        context = {'error': {'status_code': httplib.NOT_FOUND,
-                             'message': exception.message or None}}
-        return self.error_view(request, context,
-                               self.error_template_names[httplib.NOT_FOUND])
 
     def error_406(self, request, exception, *args, **kwargs):
         accept_header_parsed = MediaType.parse_accept_header(request.META.get('HTTP_ACCEPT', ''))
@@ -357,6 +356,14 @@ if 'json' in locals():
         # The default callback name if none is provided
         _default_jsonp_callback = 'callback'
 
+        # Overridden to return JSONP if there's a callback parameter
+        @renderer(format='json', mimetypes=('application/json',), name='JSON')
+        def render_json(self, request, context, template_name):
+            if self._default_jsonp_callback_parameter in request.GET:
+                return self.render_js(request, context, template_name)
+            else:
+                return super(JSONPView, self).render_json(request, context, template_name)
+
         @renderer(format='js', mimetypes=('text/javascript', 'application/javascript'), name='JavaScript (JSONP)')
         def render_js(self, request, context, template_name):
             context = self.preprocess_context_for_json(context)
@@ -371,6 +378,7 @@ class ErrorView(HTMLView, JSONPView, TextView):
     def get(self, request, context, template_name):
         self.context.update(context)
         self.template_name = template_name
+        self.context['error']['response'] = httplib.responses[context['error']['status_code']]
         self.context['status_code'] = context['error']['status_code']
         return self.render()
     post = delete = put = get
