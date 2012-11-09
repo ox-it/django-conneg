@@ -1,3 +1,11 @@
+python-django-conneg (0.9) unstable; urgency=low
+
+  * More generic handling of HTTP-based exceptions
+  * No longer catches and re-raises Exception
+  * Datetimes coerced to UTC before JSON serialization
+
+ -- Alexander Dutton <alexander.dutton@oucs.ox.ac.uk>  Fri, 9 Nov 2012 14:16:15 +0000
+
 python-django-conneg (0.8) unstable; urgency=low
 
   * Tidied some methods into better places and added deprecation warnings.
