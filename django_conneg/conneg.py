@@ -47,7 +47,7 @@ class Conneg(object):
             renderers = self._memo_by_class.get(cls)
             if renderers is None:
                 # This is about as much memoization as we can do. We keep
-                # unbound 
+                # the renderers unbound for now
                 renderers = []
                 for name in dir(cls):
                     try:
