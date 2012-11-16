@@ -20,10 +20,6 @@ def mocked_authenticate_inactive(username, password):
 def basic_auth(username, password):
     return {'HTTP_AUTHORIZATION': 'Basic ' + base64.b64encode(':'.join([username, password]))}
 
-@mock.patch('django.conf.settings.MIDDLEWARE_CLASSES',
-            ('django.contrib.sessions.middleware.SessionMiddleware',
-             'django.contrib.auth.middleware.AuthenticationMiddleware',
-             'django_conneg.support.middleware.BasicAuthMiddleware',))
 class BasicAuthTestCase(TestCase):
     def testOptionalWithout(self):
         response = self.client.get('/optional-auth/')

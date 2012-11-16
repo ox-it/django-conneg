@@ -19,3 +19,9 @@ LOGIN_URL = '/login/'
 ROOT_URLCONF = 'django_conneg.tests.urls'
 
 BASIC_AUTH_ALLOW_HTTP = True
+
+MIDDLEWARE_CLASSES = (
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django_conneg.support.middleware.BasicAuthMiddleware',
+)
