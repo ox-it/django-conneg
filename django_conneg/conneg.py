@@ -97,7 +97,9 @@ class Conneg(object):
 
         fallback_formats = fallback_formats if isinstance(fallback_formats, (list, tuple)) else (fallback_formats,)
         for format in fallback_formats:
-            renderers.extend(self.renderers_by_format[format])
+            for renderer in self.renderers_by_format[format]:
+                if renderer not in renderers:
+                    renderers.append(renderer)
 
         if context is not None and template_name:
             renderers = [r for r in renderers if r.test(request, context, template_name)]
