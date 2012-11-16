@@ -16,15 +16,28 @@ class UnauthorizedView(HTMLView, JSONPView, TextView):
         return self.render()
     post = put = delete = get
 
+class InactiveUserView(HTMLView, JSONPView, TextView):
+    _force_fallback_format = 'txt'
+    template_name = 'conneg/inactive_user'
+
+    def get(self, request):
+        self.context.update({'status_code': httplib.FORBIDDEN,
+                             'error': 'Your account is inactive.'})
+        return self.render()
+    post = put = delete = get
+
 class BasicAuthMiddleware(object):
     """
     Sets request.user if there are valid basic auth credentials on the
-    request, and turns @login_required redirects into 401 responses.
+    request, and turns @login_required redirects into 401 responses for
+    non-HTML responses.
     """
 
     allow_http = getattr(settings, 'BASIC_AUTH_ALLOW_HTTP', False) or settings.DEBUG
 
     unauthorized_view = staticmethod(UnauthorizedView.as_view())
+    inactive_user_view = staticmethod(InactiveUserView.as_view())
+
     def process_request(self, request):
         # Ignore if user already authenticated
         if request.user.is_authenticated():
@@ -50,6 +63,10 @@ class BasicAuthMiddleware(object):
         user = authenticate(username=credentials[0], password=credentials[1])
         if user and user.is_active:
             request.user = user
+        elif user and not user.is_active:
+            return self.inactive_user_view(request)
+        else:
+            return self.unauthorized_view(request)
 
     def process_response(self, request, response):
         process = False
@@ -58,9 +75,9 @@ class BasicAuthMiddleware(object):
         if not self.allow_http and not request.is_secure():
             return response
 
-        if response.status_code == 401:
+        if response.status_code == httplib.UNAUTHORIZED:
             process = True
-        elif response.status_code == 302:
+        elif response.status_code == httplib.FOUND:
             # Don't return a 401 if the view wasn't handled by a
             # ContentNegotiatedView.
             renderers = getattr(request, 'renderers', None)
