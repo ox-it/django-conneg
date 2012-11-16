@@ -2,13 +2,8 @@ import itertools
 import unittest
 
 from django.http import HttpResponse
-from django.test.simple import DjangoTestSuiteRunner
 
-from . import http, views, decorators
-
-class DatabaselessTestSuiteRunner(DjangoTestSuiteRunner):
-    def setup_databases(self, *args, **kwargs): pass
-    def teardown_databases(self, *args, **kwargs): pass
+from django_conneg import http, views, decorators
 
 class PriorityTestCase(unittest.TestCase):
     mimetypes = ('text/plain', 'application/xml', 'text/html', 'application/json')
