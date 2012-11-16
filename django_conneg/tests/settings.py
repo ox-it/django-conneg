@@ -13,3 +13,9 @@ else:
     INSTALLED_APPS += ('django_jenkins',)
 
 DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3'}}
+
+LOGIN_URL = '/login/'
+
+ROOT_URLCONF = 'django_conneg.tests.urls'
+
+BASIC_AUTH_ALLOW_HTTP = True

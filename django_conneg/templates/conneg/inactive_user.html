@@ -1,0 +1,11 @@
+{% extends "conneg/base.html" %}
+
+{% block title %}Forbidden{% endblock %}
+
+{% block content %}
+  <h1>Forbidden (inactive user)</h1>
+  
+  <p>Access to this resource is forbidden.</p>
+
+  {% if error.message %}<p>{{ error.message }}</p>{% endif %}
+{% endblock %}
