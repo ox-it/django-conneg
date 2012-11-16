@@ -1,3 +1,10 @@
+python-django-conneg (0.9.2) unstable; urgency=low
+
+  * Fixed test stage of Debian package (new settings path)
+  * Backported to mock < 0.7 (as is on squeeze)
+
+ -- Alexander Dutton <alexander.dutton@it.ox.ac.uk>  Fri, 16 Nov 2012 15:32:47 +0000
+
 python-django-conneg (0.9.1) unstable; urgency=low
 
   * BasicAuthMiddleware now returns 401 if supplied with invalid credentials,
