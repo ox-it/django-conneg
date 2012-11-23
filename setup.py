@@ -69,7 +69,7 @@ setup(
     version=__version__,
     packages=packages,
     license='BSD',
-    url='https://github.com/oucs/django-conneg',
+    url='https://github.com/ox-it/django-conneg',
     long_description=open('README.rst').read(),
     classifiers=['Development Status :: 4 - Beta',
                  'Framework :: Django',
