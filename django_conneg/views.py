@@ -30,6 +30,7 @@ class BaseContentNegotiatedView(View):
     _default_format = None
     _force_fallback_format = None
     _format_override_parameter = 'format'
+    _format_override_extension = False
     
     template_name = None
 
@@ -72,6 +73,10 @@ class BaseContentNegotiatedView(View):
                 fallback_formats = (fallback_formats,)
             if request.REQUEST.get(self._format_override_parameter):
                 format_override = request.REQUEST[self._format_override_parameter].split(',')
+            elif self._format_override_extension and \
+                    request.path.rfind("/") < request.path.rfind("."):
+                _, format_override = request.path.rsplit(".", 1)
+                format_override = (str(format_override),)
             else:
                 format_override = None
             request.renderers = self.conneg.get_renderers(request=request,
