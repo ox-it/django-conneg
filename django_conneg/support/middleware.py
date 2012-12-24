@@ -4,6 +4,7 @@ import urlparse
 
 from django.conf import settings
 from django.contrib.auth import authenticate
+from django_conneg.http import MediaType
 from django_conneg.views import HTMLView, JSONPView, TextView
 
 class UnauthorizedView(HTMLView, JSONPView, TextView):
@@ -69,6 +70,11 @@ class BasicAuthMiddleware(object):
             return self.unauthorized_view(request)
 
     def process_response(self, request, response):
+        """
+        Adds WWW-Authenticate: Basic headers to 401 responses, and rewrites
+        redirects the login page to be 401 responses if it's a non-browser
+        agent.
+        """
         process = False
 
         # Don't do anything for unsecure requests, unless DEBUG is on
@@ -78,14 +84,17 @@ class BasicAuthMiddleware(object):
         if response.status_code == httplib.UNAUTHORIZED:
             process = True
         elif response.status_code == httplib.FOUND:
-            # Don't return a 401 if the view wasn't handled by a
-            # ContentNegotiatedView.
-            renderers = getattr(request, 'renderers', None)
-            if renderers and renderers[0].format != 'html':
-                location = urlparse.urlparse(response['Location'])
-                if location.path == settings.LOGIN_URL:
-                    response = self.unauthorized_view(request)
-                    process = True
+            # Two ways to check whether the request was AJAX or CORS
+            if request.is_ajax() or request.META.get('HTTP_ORIGIN'):
+                process = True
+            else:
+                # Don't return a 401 if the client preferred HTML
+                accept = sorted(MediaType.parse_accept_header(request.META.get('HTTP_ACCEPT', '')), reverse=True)
+                if not accept or accept[0].type not in (('text', 'html', None), ('application', 'xml', 'xhtml')):
+                    location = urlparse.urlparse(response['Location'])
+                    if location.path == settings.LOGIN_URL:
+                        response = self.unauthorized_view(request)
+                        process = True
 
         if not process:
             return response
