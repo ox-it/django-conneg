@@ -221,11 +221,11 @@ class ContentNegotiatedView(BaseContentNegotiatedView):
     def dispatch(self, request, *args, **kwargs):
         try:
             return super(ContentNegotiatedView, self).dispatch(request, *args, **kwargs)
-        except http.Http404, e:
+        except http.Http404 as e:
             return self.error(request, e, args, kwargs, httplib.NOT_FOUND)
-        except exceptions.PermissionDenied, e:
+        except exceptions.PermissionDenied as e:
             return self.error(request, e, args, kwargs, httplib.FORBIDDEN)
-        except HttpError, e:
+        except HttpError as e:
             return self.error(request, e, args, kwargs, e.status_code)
 
     def http_not_acceptable(self, request, tried_mimetypes, *args, **kwargs):
