@@ -1,0 +1,11 @@
+{% extends "conneg/base.html" %}
+
+{% block title %}Service Unavailable{% endblock %}
+
+{% block content %}
+  <h1>Service Unavailable</h1>
+  
+  <p>The requested resource is not available at the moment. Please try again later.</p>
+
+  {% if error.message %}<p>{{ error.message }}</p>{% endif %}
+{% endblock %}

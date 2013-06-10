@@ -1,0 +1,11 @@
+{% extends "conneg/base.html" %}
+
+{% block title %}Forbidden{% endblock %}
+
+{% block content %}
+  <h1>{{ status_code }} {{ status_message }}</h1>
+  
+  <p>There was an error dealing with your request.</p>
+
+  {% if error.message %}<p>{{ error.message }}</p>{% endif %}
+{% endblock %}

@@ -214,7 +214,9 @@ class ContentNegotiatedView(BaseContentNegotiatedView):
     error_template_names = {httplib.NOT_FOUND: ('conneg/not_found', '404'),
                             httplib.FORBIDDEN: ('conneg/forbidden', '403'),
                             httplib.NOT_ACCEPTABLE: ('conneg/not_acceptable',),
-                            httplib.BAD_REQUEST: ('conneg/bad_request', '400')}
+                            httplib.BAD_REQUEST: ('conneg/bad_request', '400'),
+                            httplib.SERVICE_UNAVAILABLE: ('conneg/service_unavailable', '503'),
+                            'default': ('conneg/error',)}
 
     def dispatch(self, request, *args, **kwargs):
         try:
@@ -236,18 +238,18 @@ class ContentNegotiatedView(BaseContentNegotiatedView):
         # See if we've got a dedicated handler for this status code
         if callable(method):
             return method(request, exception, *args, **kwargs)
+
         # Otherwise, if it's an HttpError, try to render it to an
         # appropriate template
-        elif isinstance(exception, HttpError) and status_code in self.error_template_names:
-            context = {'error': {'status_code': status_code,
-                                 'message': exception.message or None}}
-            return self.error_view(request, context,
-                                   self.error_template_names[status_code])
-        # Otherwise, try to re-raise the blighter
-        elif all(sys.exc_info()):
-            raise
-        else:
-            raise exception
+        context = {'error': {'status_code': status_code,
+                             'status_message': httplib.responses.get(status_code)}}
+        if isinstance(exception, HttpError) and exception.message:
+            context['error']['message'] = exception.message
+
+        template_names = self.error_template_names.get(status_code,
+                                                       self.error_template_names['default'])
+
+        return self.error_view(request, context, template_names)
 
     def error_406(self, request, exception, *args, **kwargs):
         accept_header_parsed = MediaType.parse_accept_header(request.META.get('HTTP_ACCEPT', ''))

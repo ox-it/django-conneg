@@ -1,0 +1,5 @@
+{{ status_code }} {{ status_message }}
+  
+There was an error dealing with your request.
+
+{% if error.message %}{{ error.message }}{% endif %}
