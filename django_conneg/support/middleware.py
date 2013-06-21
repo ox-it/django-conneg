@@ -84,22 +84,20 @@ class BasicAuthMiddleware(object):
         if response.status_code == httplib.UNAUTHORIZED:
             process = True
         elif response.status_code == httplib.FOUND:
-            # Two ways to check whether the request was AJAX or CORS
-            if request.is_ajax() or request.META.get('HTTP_ORIGIN'):
-                process = True
-            else:
-                # Don't return a 401 if the client preferred HTML
-                accept = sorted(MediaType.parse_accept_header(request.META.get('HTTP_ACCEPT', '')), reverse=True)
-                if not accept or accept[0].type not in (('text', 'html', None), ('application', 'xml', 'xhtml')):
-                    location = urlparse.urlparse(response['Location'])
-                    if location.path == settings.LOGIN_URL:
-                        response = self.unauthorized_view(request)
-                        process = True
+            # We're looking for a FOUND, redirecting to the login page, and the client not wanting HTML.
+            accept = sorted(MediaType.parse_accept_header(request.META.get('HTTP_ACCEPT', '')), reverse=True)
+            if not accept or accept[0].type not in (('text', 'html', None), ('application', 'xml', 'xhtml')):
+                location = urlparse.urlparse(response['Location'])
+                if location.path == settings.LOGIN_URL:
+                    process = True
 
         if not process:
             return response
 
         realm = getattr(settings, 'BASIC_AUTH_REALM', request.META.get('HTTP_HOST', 'restricted'))
+        
+        if response.status_code == httplib.FOUND:
+            response = self.unauthorized_view(request)
 
         authenticate = response.get('WWW-Authenticate', None)
         if authenticate:
