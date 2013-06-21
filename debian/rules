@@ -4,7 +4,7 @@
 	dh $@ --with python2
 
 override_dh_auto_test:
-	django-admin test --settings=django_conneg.tests.settings --pythonpath=.
+	django-admin test --settings=django_conneg.test_settings --pythonpath=.
 
 overridge_dh_clean:
 	dh_clean
