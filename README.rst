@@ -217,7 +217,7 @@ Running the tests
 ``django-conneg`` has a modest test suite. To run it, head to the root of the
 repository and run::
 
-    django-admin test --settings=django_conneg.tests.settings --pythonpath=.
+    django-admin test --settings=django_conneg.test_settings --pythonpath=.
 
 If you don't have Django, you'll need to install it as detailed in the
 Prerequisites section above.
