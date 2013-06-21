@@ -2,7 +2,10 @@ import imp
 
 INSTALLED_APPS = (
     'django_conneg',
+    'django_conneg.tests',
 )
+
+SECRET_KEY = 'test secret key'
 
 # Use django_jenkins if it's installed.
 try:
