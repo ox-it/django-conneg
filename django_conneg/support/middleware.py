@@ -60,7 +60,7 @@ class BasicAuthMiddleware(object):
         if not authorization or not authorization.startswith('Basic '):
             return
         try:
-            credentials = base64.b64decode(authorization[6:]).split(':', 1)
+            credentials = base64.b64decode(authorization[6:].encode('utf-8')).decode('utf-8').split(':', 1)
         except TypeError:
             return
         if len(credentials) != 2:
@@ -91,7 +91,7 @@ class BasicAuthMiddleware(object):
             # We're looking for a FOUND, redirecting to the login page, and the client not wanting HTML.
             accept = sorted(MediaType.parse_accept_header(request.META.get('HTTP_ACCEPT', '')), reverse=True)
             if not accept or accept[0].type not in (('text', 'html', None), ('application', 'xml', 'xhtml')):
-                location = urlparse.urlparse(response['Location'])
+                location = urllib_parse.urlparse(response['Location'])
                 if location.path == settings.LOGIN_URL:
                     process = True
 
@@ -100,7 +100,7 @@ class BasicAuthMiddleware(object):
 
         realm = getattr(settings, 'BASIC_AUTH_REALM', request.META.get('HTTP_HOST', 'restricted'))
         
-        if response.status_code == httplib.FOUND:
+        if response.status_code == FOUND:
             response = self.unauthorized_view(request)
 
         authenticate = response.get('WWW-Authenticate', None)

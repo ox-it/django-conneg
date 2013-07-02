@@ -38,7 +38,7 @@ class PriorityTestCase(unittest.TestCase):
             renderers = http.MediaType.resolve(accept, renderers)
 
             for renderer, mimetype in zip(renderers, mimetypes):
-                self.assertEqual(iter(renderer.mimetypes).next(), http.MediaType(mimetype))
+                self.assertEqual(next(iter(renderer.mimetypes)), http.MediaType(mimetype))
 
     def testEqualQualityView(self):
         accept_header = ', '.join(self.mimetypes)
@@ -50,7 +50,7 @@ class PriorityTestCase(unittest.TestCase):
             renderers = http.MediaType.resolve(accept, test_view.conneg.renderers)
 
             for renderer, mimetype in zip(renderers, mimetypes):
-                self.assertEqual(iter(renderer.mimetypes).next(), http.MediaType(mimetype))
+                self.assertEqual(next(iter(renderer.mimetypes)), http.MediaType(mimetype))
 
     def testPrioritySorting(self):
         for mimetypes in itertools.permutations(self.mimetypes):

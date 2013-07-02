@@ -228,7 +228,7 @@ class ContentNegotiatedView(BaseContentNegotiatedView):
                             http_client.FORBIDDEN: ('conneg/forbidden', '403'),
                             http_client.NOT_ACCEPTABLE: ('conneg/not_acceptable',),
                             http_client.BAD_REQUEST: ('conneg/bad_request', '400'),
-                            http_client..SERVICE_UNAVAILABLE: ('conneg/service_unavailable', '503'),
+                            http_client.SERVICE_UNAVAILABLE: ('conneg/service_unavailable', '503'),
                             'default': ('conneg/error',)}
 
     def dispatch(self, request, *args, **kwargs):
