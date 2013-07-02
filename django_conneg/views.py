@@ -1,12 +1,20 @@
+from __future__ import unicode_literals
+
 import datetime
-import httplib
+try: # Python < 3
+    import httplib as http_client
+    import urlparse as urllib_parse
+    from urllib import urlencode
+except ImportError: # Python >= 3
+    import http.client as http_client
+    import urllib.parse as urllib_parse
+    from urllib.parse import urlencode
 import inspect
 import itertools
 import logging
 import sys
 import time
 import urllib
-import urlparse
 import warnings
 
 from django.core import exceptions
@@ -88,7 +96,7 @@ class BaseContentNegotiatedView(View):
     def get_render_params(self, request, context, template_name):
         if not template_name:
             template_name = self.template_name
-            if isinstance(template_name, basestring) and template_name.endswith('.html'):
+            if isinstance(template_name, str) and template_name.endswith('.html'):
                 template_name = template_name[:-5]
         return request or self.request, context or self.context, template_name
 
@@ -106,7 +114,7 @@ class BaseContentNegotiatedView(View):
 
         self.set_renderers()
 
-        status_code = context.pop('status_code', httplib.OK)
+        status_code = context.pop('status_code', http_client.OK)
         additional_headers = context.pop('additional_headers', {})
 
         for renderer in request.renderers:
@@ -120,7 +128,7 @@ class BaseContentNegotiatedView(View):
             tried_mimetypes = list(itertools.chain(*[r.mimetypes for r in request.renderers]))
             response = self.http_not_acceptable(request, tried_mimetypes)
             response.renderer = None
-        for key, value in additional_headers.iteritems():
+        for key, value in additional_headers.items():
             response[key] = value
 
         # We're doing content-negotiation, so tell the user-agent that the
@@ -135,7 +143,7 @@ Your Accept header didn't contain any supported media ranges.
 Supported ranges are:
 
  * %s\n""" % '\n * '.join(sorted('%s (%s; %s)' % (f.name, ", ".join(m.value for m in f.mimetypes), f.format) for f in request.renderers if not any(m in tried_mimetypes for m in f.mimetypes))), mimetype="text/plain")
-        response.status_code = httplib.NOT_ACCEPTABLE
+        response.status_code = http_client.NOT_ACCEPTABLE
         return response
 
     def head(self, request, *args, **kwargs):
@@ -161,7 +169,7 @@ Supported ranges are:
         request, context, template_name = self.get_render_params(request, context, template_name)
         self.set_renderers()
 
-        status_code = context.pop('status_code', httplib.OK)
+        status_code = context.pop('status_code', http_client.OK)
         additional_headers = context.pop('additional_headers', {})
 
         for renderer in self.conneg.renderers_by_format.get(format, ()):
@@ -174,7 +182,7 @@ Supported ranges are:
 
         response.status_code = status_code
         response.renderer = renderer
-        for key, value in additional_headers.iteritems():
+        for key, value in additional_headers.items():
             response[key] = value
         return response
 
@@ -186,7 +194,7 @@ Supported ranges are:
             return None
         if isinstance(template_name, (list, tuple)):
             return tuple('.'.join([n, extension]) for n in template_name)
-        if isinstance(template_name, basestring):
+        if isinstance(template_name, str):
             return '.'.join([template_name, extension])
         raise AssertionError('template_name not of correct type: %r' % type(template_name))
 
@@ -198,9 +206,9 @@ Supported ranges are:
                 'url': self.url_for_format(request, renderer.format)}
 
     def url_for_format(self, request, format):
-        qs = urlparse.parse_qs(request.META.get('QUERY_STRING', ''))
+        qs = urllib_parse.parse_qs(request.META.get('QUERY_STRING', ''))
         qs['format'] = [format]
-        return '?{0}'.format(urllib.urlencode(qs, True))
+        return '?{0}'.format(urlencode(qs, True))
 
 
 
@@ -211,20 +219,20 @@ class ContentNegotiatedView(BaseContentNegotiatedView):
             self._error_view = ErrorView.as_view()
         return self._error_view
 
-    error_template_names = {httplib.NOT_FOUND: ('conneg/not_found', '404'),
-                            httplib.FORBIDDEN: ('conneg/forbidden', '403'),
-                            httplib.NOT_ACCEPTABLE: ('conneg/not_acceptable',),
-                            httplib.BAD_REQUEST: ('conneg/bad_request', '400'),
-                            httplib.SERVICE_UNAVAILABLE: ('conneg/service_unavailable', '503'),
+    error_template_names = {http_client.NOT_FOUND: ('conneg/not_found', '404'),
+                            http_client.FORBIDDEN: ('conneg/forbidden', '403'),
+                            http_client.NOT_ACCEPTABLE: ('conneg/not_acceptable',),
+                            http_client.BAD_REQUEST: ('conneg/bad_request', '400'),
+                            http_client..SERVICE_UNAVAILABLE: ('conneg/service_unavailable', '503'),
                             'default': ('conneg/error',)}
 
     def dispatch(self, request, *args, **kwargs):
         try:
             return super(ContentNegotiatedView, self).dispatch(request, *args, **kwargs)
         except http.Http404 as e:
-            return self.error(request, e, args, kwargs, httplib.NOT_FOUND)
+            return self.error(request, e, args, kwargs, http_client.NOT_FOUND)
         except exceptions.PermissionDenied as e:
-            return self.error(request, e, args, kwargs, httplib.FORBIDDEN)
+            return self.error(request, e, args, kwargs, http_client.FORBIDDEN)
         except HttpError as e:
             return self.error(request, e, args, kwargs, e.status_code)
 
@@ -242,9 +250,9 @@ class ContentNegotiatedView(BaseContentNegotiatedView):
         # Otherwise, if it's an HttpError, try to render it to an
         # appropriate template
         context = {'error': {'status_code': status_code,
-                             'status_message': httplib.responses.get(status_code)}}
-        if isinstance(exception, HttpError) and exception.message:
-            context['error']['message'] = exception.message
+                             'status_message': http_client.responses.get(status_code)}}
+        if isinstance(exception, HttpError) and exception.args:
+            context['error']['message'] = exception.args[0]
 
         template_names = self.error_template_names.get(status_code,
                                                        self.error_template_names['default'])
@@ -254,8 +262,8 @@ class ContentNegotiatedView(BaseContentNegotiatedView):
     def error_406(self, request, exception, *args, **kwargs):
         accept_header_parsed = MediaType.parse_accept_header(request.META.get('HTTP_ACCEPT', ''))
         accept_header_parsed.sort(reverse=True)
-        accept_header_parsed = map(unicode, accept_header_parsed)
-        context = {'error': {'status_code': httplib.NOT_ACCEPTABLE,
+        accept_header_parsed = map(str, accept_header_parsed)
+        context = {'error': {'status_code': http_client.NOT_ACCEPTABLE,
                              'tried_mimetypes': exception.tried_mimetypes,
                              'available_renderers': [self.renderer_for_context(request, r) for r in self.conneg.renderers],
                              'format_parameter_name': self._format_override_parameter,
@@ -264,7 +272,7 @@ class ContentNegotiatedView(BaseContentNegotiatedView):
                              'accept_header': request.META.get('HTTP_ACCEPT'),
                              'accept_header_parsed': accept_header_parsed}}
         return self.error_view(request, context,
-                               self.error_template_names[httplib.NOT_ACCEPTABLE])
+                               self.error_template_names[http_client.NOT_ACCEPTABLE])
 
 # For backwards compatibility
 ErrorCatchingView = ContentNegotiatedView
@@ -329,12 +337,12 @@ if 'json' in locals():
                 return items
             if isinstance(value, dict):
                 items = {}
-                for key, item in value.iteritems():
+                for key, item in value.items():
                     item = self.simplify_for_json(item)
                     if item is not NotImplemented:
-                        items[unicode(key)] = item
+                        items[str(key)] = item
                 return items
-            elif type(value) in (str, unicode, int, float, long, bool):
+            elif type(value) in (str, int, float, bool):
                 return value
             elif value is None:
                 return value
@@ -380,7 +388,7 @@ class ErrorView(HTMLView, JSONPView, TextView):
     def get(self, request, context, template_name):
         self.context.update(context)
         self.template_name = template_name
-        self.context['error']['response'] = httplib.responses[context['error']['status_code']]
+        self.context['error']['response'] = http_client.responses[context['error']['status_code']]
         self.context['status_code'] = context['error']['status_code']
         return self.render()
     post = delete = put = get

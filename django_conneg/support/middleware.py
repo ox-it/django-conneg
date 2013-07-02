@@ -1,6 +1,10 @@
 import base64
-import httplib
-import urlparse
+try: # Python 3
+    from http.client import UNAUTHORIZED, FORBIDDEN, FOUND
+    import urllib.parse as urllib_parse
+except ImportError: # Python 2.x
+    from httplib import UNAUTHORIZED, FORBIDDEN, FOUND
+    import urlparse as urllib_parse
 
 from django.conf import settings
 from django.contrib.auth import authenticate
@@ -12,7 +16,7 @@ class UnauthorizedView(HTMLView, JSONPView, TextView):
     template_name = 'conneg/unauthorized'
 
     def get(self, request):
-        self.context.update({'status_code': httplib.UNAUTHORIZED,
+        self.context.update({'status_code': UNAUTHORIZED,
                              'error': 'You need to be authenticated to perform this request.'})
         return self.render()
     post = put = delete = get
@@ -22,7 +26,7 @@ class InactiveUserView(HTMLView, JSONPView, TextView):
     template_name = 'conneg/inactive_user'
 
     def get(self, request):
-        self.context.update({'status_code': httplib.FORBIDDEN,
+        self.context.update({'status_code': FORBIDDEN,
                              'error': 'Your account is inactive.'})
         return self.render()
     post = put = delete = get
@@ -81,9 +85,9 @@ class BasicAuthMiddleware(object):
         if not self.allow_http and not request.is_secure():
             return response
 
-        if response.status_code == httplib.UNAUTHORIZED:
+        if response.status_code == UNAUTHORIZED:
             process = True
-        elif response.status_code == httplib.FOUND:
+        elif response.status_code == FOUND:
             # We're looking for a FOUND, redirecting to the login page, and the client not wanting HTML.
             accept = sorted(MediaType.parse_accept_header(request.META.get('HTTP_ACCEPT', '')), reverse=True)
             if not accept or accept[0].type not in (('text', 'html', None), ('application', 'xml', 'xhtml')):

@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import re
 
 from django.http import HttpResponseRedirect
@@ -29,7 +31,7 @@ class MediaType(object):
 
     _MEDIA_TYPE_RE = re.compile(r'(\*/\*)|(?P<type>[^/]+)/(\*|((?P<subsubtype>[^+]+)\+)?(?P<subtype>.+))')
     def __init__(self, value, priority=0):
-        value = unicode(value).strip()
+        value = str(value).strip()
         media_type = value.split(';')
         media_type, params = media_type[0].strip(), dict((i.strip() for i in p.split('=', 1)) for p in media_type[1:] if '=' in p)
 
@@ -49,7 +51,7 @@ class MediaType(object):
         self.value = value
         self.priority = priority
 
-    def __unicode__(self):
+    def __str__(self):
         return self.value
 
     def __gt__(self, other):
@@ -71,7 +73,7 @@ class MediaType(object):
     def __eq__(self, other):
         return self.quality == other.quality and self.type == other.type and self.params == other.params
     def __hash__(self):
-        return hash(hash(self.quality) + hash(self.type) + hash(tuple(sorted(self.params.iteritems()))))
+        return hash(hash(self.quality) + hash(self.type) + hash(tuple(sorted(self.params.items()))))
     def __ne__(self, other):
         return not self.__eq__(other)
     def equivalent(self, other):
