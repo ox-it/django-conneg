@@ -38,6 +38,7 @@ class BaseContentNegotiatedView(View):
     _default_format = None
     _force_fallback_format = None
     _format_override_parameter = 'format'
+    _format_url_parameter = 'format'
     
     template_name = None
 
@@ -54,6 +55,14 @@ class BaseContentNegotiatedView(View):
         # BaseContentNegotiatedView, and which renderers were preferred.
         if self.context is None:
             self.context = {'additional_headers': {}}
+
+        if self._format_url_parameter in kwargs:
+            self.format_override = [kwargs.pop(self._format_url_parameter)]
+        elif request.REQUEST.get(self._format_override_parameter):
+            self.format_override = request.REQUEST[self._format_override_parameter].split(',')
+        else:
+            self.format_override = None
+
         self.request = request
         self.args = args
         self.kwargs = kwargs
@@ -78,15 +87,11 @@ class BaseContentNegotiatedView(View):
             fallback_formats = self._force_fallback_format or ()
             if not isinstance(fallback_formats, (list, tuple)):
                 fallback_formats = (fallback_formats,)
-            if request.REQUEST.get(self._format_override_parameter):
-                format_override = request.REQUEST[self._format_override_parameter].split(',')
-            else:
-                format_override = None
             request.renderers = self.conneg.get_renderers(request=request,
                                                           context=context,
                                                           template_name=template_name,
                                                           accept_header=request.META.get('HTTP_ACCEPT'),
-                                                          formats=format_override,
+                                                          formats=self.format_override,
                                                           default_format=self._default_format,
                                                           fallback_formats=fallback_formats)
             request.renderers_for_view = args
