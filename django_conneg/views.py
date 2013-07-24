@@ -56,8 +56,9 @@ class BaseContentNegotiatedView(View):
         if self.context is None:
             self.context = {'additional_headers': {}}
 
-        if self._format_url_parameter in kwargs:
-            self.format_override = [kwargs.pop(self._format_url_parameter)]
+        format_url_parameter = kwargs.pop(self._format_url_parameter, None)
+        if format_url_parameter:
+            self.format_override = [format_url_parameter]
         elif request.REQUEST.get(self._format_override_parameter):
             self.format_override = request.REQUEST[self._format_override_parameter].split(',')
         else:
