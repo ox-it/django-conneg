@@ -70,7 +70,7 @@ class BaseContentNegotiatedView(View):
         self.set_renderers(request)
         return super(BaseContentNegotiatedView, self).dispatch(request, *args, **kwargs)
 
-    def set_renderers(self, request=None, context=None, template_name=None):
+    def set_renderers(self, request=None, context=None, template_name=None, early=False):
         """
         Makes sure that the renderers attribute on the request is up
         to date. renderers_for_view keeps track of the view that
@@ -93,7 +93,9 @@ class BaseContentNegotiatedView(View):
                                                           accept_header=request.META.get('HTTP_ACCEPT'),
                                                           formats=self.format_override,
                                                           default_format=self._default_format,
-                                                          fallback_formats=fallback_formats)
+                                                          fallback_formats=fallback_formats,
+                                                          early=early)
+            print self.format_override
             request.renderers_for_view = args
         self.context['renderers'] = [self.renderer_for_context(request, r) for r in self.conneg.renderers]
         return request.renderers
