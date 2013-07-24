@@ -25,6 +25,13 @@ class Renderer(object):
     def __call__(self, *args, **kwargs):
         return self.func(*args, **kwargs)
 
+    @property
+    def __name__(self):
+        return self.func.__name__
+    @__name__.setter
+    def __name__(self, name):
+        self.func.__name__ = name
+
     def __repr__(self):
         if self.is_bound:
             return "<bound renderer {0}.{1} of {2}>".format(self.func.im_class.__name__ or '?',
