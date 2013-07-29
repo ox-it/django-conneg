@@ -5,10 +5,13 @@ try: # Python < 3
     import httplib as http_client
     import urlparse as urllib_parse
     from urllib import urlencode
+    str_types = (unicode, str)
 except ImportError: # Python >= 3
     import http.client as http_client
     import urllib.parse as urllib_parse
     from urllib.parse import urlencode
+    str_types = (str,)
+    unicode = str
 import inspect
 import itertools
 import logging
@@ -104,7 +107,7 @@ class BaseContentNegotiatedView(View):
     def get_render_params(self, request, context, template_name):
         if not template_name:
             template_name = self.template_name
-            if isinstance(template_name, str) and template_name.endswith('.html'):
+            if isinstance(template_name, str_types) and template_name.endswith('.html'):
                 template_name = template_name[:-5]
         return request or self.request, context or self.context, template_name
 
@@ -202,7 +205,7 @@ Supported ranges are:
             return None
         if isinstance(template_name, (list, tuple)):
             return tuple('.'.join([n, extension]) for n in template_name)
-        if isinstance(template_name, str):
+        if isinstance(template_name, str_types):
             return '.'.join([template_name, extension])
         raise AssertionError('template_name not of correct type: %r' % type(template_name))
 
@@ -270,7 +273,7 @@ class ContentNegotiatedView(BaseContentNegotiatedView):
     def error_406(self, request, exception, *args, **kwargs):
         accept_header_parsed = MediaType.parse_accept_header(request.META.get('HTTP_ACCEPT', ''))
         accept_header_parsed.sort(reverse=True)
-        accept_header_parsed = map(str, accept_header_parsed)
+        accept_header_parsed = map(unicode, accept_header_parsed)
         context = {'error': {'status_code': http_client.NOT_ACCEPTABLE,
                              'tried_mimetypes': exception.tried_mimetypes,
                              'available_renderers': [self.renderer_for_context(request, r) for r in self.conneg.renderers],
@@ -348,10 +351,12 @@ if 'json' in locals():
                 for key, item in value.items():
                     item = self.simplify_for_json(item)
                     if item is not NotImplemented:
-                        items[str(key)] = item
+                        items[unicode(key)] = item
                 return items
-            elif type(value) in (str, int, float, bool):
+            elif type(value) in (int, float, bool):
                 return value
+            elif type(value) in str_types:
+                return unicode(value)
             elif value is None:
                 return value
             else:
