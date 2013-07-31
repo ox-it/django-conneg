@@ -86,17 +86,15 @@ class BasicAuthMiddleware(object):
             return response
 
         if response.status_code == UNAUTHORIZED:
-            process = True
+            pass
         elif response.status_code == FOUND:
-            # We're looking for a FOUND, redirecting to the login page, and the client not wanting HTML.
-            accept = sorted(MediaType.parse_accept_header(request.META.get('HTTP_ACCEPT', '')), reverse=True)
-            if not accept or accept[0].type not in (('text', 'html', None), ('application', 'xml', 'xhtml')):
-                location = urllib_parse.urlparse(response['Location'])
-                if location.path == settings.LOGIN_URL:
-                    process = True
-
-        if not process:
-            return response
+            location = urllib_parse.urlparse(response['Location'])
+            if location.path != settings.LOGIN_URL:
+                # If it wasn't a redirect to the login page, we don't touch it.
+                return response
+            elif not self.is_agent_a_robot(request):
+                # We don't touch requests made in order to be shown to humans.
+                return response
 
         realm = getattr(settings, 'BASIC_AUTH_REALM', request.META.get('HTTP_HOST', 'restricted'))
         
@@ -111,3 +109,23 @@ class BasicAuthMiddleware(object):
         response['WWW-Authenticate'] = authenticate
 
         return response
+
+    def is_agent_a_robot(self, request):
+        if request.META.get('HTTP_ORIGIN'):
+            # A CORS request (from JavaScript)
+            return True
+        if request.META.get('HTTP_X_REQUESTED_WITH'):
+            # An AJAX request (from JavaScript)
+            return True
+        accept = sorted(MediaType.parse_accept_header(request.META.get('HTTP_ACCEPT', '')), reverse=True)
+        if accept and accept[0].type in (('text', 'html', None), ('application', 'xml', 'xhtml')):
+            # Agents whose first preference is for HTML are presumably trying
+            # to show it to a human.
+            return False
+        if 'MSIE' in request.META.get('HTTP_USER_AGENT', ''):
+            # We'll assume that IE (which doesn't set a proper Accept header)
+            # is making a request on behalf of a human. It does seem to set an
+            # Origin header when using XDomainRequest, and can set
+            # X-Requested-With if the request is being made from JavaScript.
+            return False
+        return True
