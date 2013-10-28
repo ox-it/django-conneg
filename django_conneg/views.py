@@ -99,7 +99,6 @@ class BaseContentNegotiatedView(View):
                                                           default_format=self._default_format,
                                                           fallback_formats=fallback_formats,
                                                           early=early)
-            print self.format_override
             request.renderers_for_view = args
         self.context['renderers'] = [self.renderer_for_context(request, r) for r in self.conneg.renderers]
         return request.renderers
