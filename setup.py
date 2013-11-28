@@ -64,8 +64,8 @@ for line in open('requirements.txt'):
 setup(
     name='django-conneg',
     description="An implementation of content-negotiating class-based views for Django",
-    author='Oxford University Computing Services',
-    author_email='infodev@oucs.ox.ac.uk',
+    author='IT Services, University of Oxford',
+    author_email='infodev@it.ox.ac.uk',
     version=__version__,
     packages=packages,
     license='BSD',
