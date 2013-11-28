@@ -1,3 +1,11 @@
+python-django-conneg (0.9.4) unstable; urgency=low
+
+  * Python 3 support
+  * format can now be passed from urlconf param
+  * BasicAuthMiddleware improvements
+
+ -- Alexander Dutton <alexander.dutton@it.ox.ac.uk>  Thu, 28 Nov 2013 22:23:19 +0000
+
 python-django-conneg (0.9.3) unstable; urgency=low
 
   * URL in setup.py now points at the right repository.
