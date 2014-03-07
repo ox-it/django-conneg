@@ -337,7 +337,7 @@ if 'json' in locals():
             if isinstance(value, datetime.datetime):
                 if value.tzinfo:
                     value = value.astimezone(utc)
-                return time.mktime(value.timetuple()) * 1000
+                return int(time.mktime(value.timetuple()) * 1000)
             if isinstance(value, (list, tuple)):
                 items = []
                 for item in value:
