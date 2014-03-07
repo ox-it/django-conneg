@@ -10,6 +10,9 @@ class HttpResponseSeeOther(HttpResponseRedirect):
 class HttpResponseTemporaryRedirect(HttpResponseRedirect):
     status_code = 307
 
+class HttpResponseCreated(HttpResponseRedirect):
+    status_code = 201
+
 class HttpError(Exception):
     def __init__(self, status_code=None, message=None):
         if status_code:
@@ -23,6 +26,12 @@ class HttpNotAcceptable(HttpError):
 
 class HttpBadRequest(HttpError):
     status_code = 400
+
+class HttpConflict(HttpError):
+    status_code = 409
+
+class HttpGone(HttpError):
+    status_code = 410
 
 class MediaType(object):
     """
