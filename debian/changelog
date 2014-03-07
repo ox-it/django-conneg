@@ -1,3 +1,10 @@
+python-django-conneg (0.9.5) unstable; urgency=low
+
+  * More HTTP error classes
+  * Integer JS timestamps
+
+ -- Alexander Dutton <alexander.dutton@it.ox.ac.uk>  Fri, 7 Mar 2014 22:42:28 +0000
+
 python-django-conneg (0.9.4) unstable; urgency=low
 
   * Python 3 support
