@@ -42,6 +42,7 @@ class BaseContentNegotiatedView(View):
     _force_fallback_format = None
     _format_override_parameter = 'format'
     _format_url_parameter = 'format'
+    _include_renderer_details_in_context = True
     
     template_name = None
 
@@ -100,7 +101,8 @@ class BaseContentNegotiatedView(View):
                                                           fallback_formats=fallback_formats,
                                                           early=early)
             request.renderers_for_view = args
-        self.context['renderers'] = [self.renderer_for_context(request, r) for r in self.conneg.renderers]
+        if self._include_renderer_details_in_context:
+            self.context['renderers'] = [self.renderer_for_context(request, r) for r in self.conneg.renderers]
         return request.renderers
 
     def get_render_params(self, request, context, template_name):
