@@ -300,7 +300,7 @@ class HTMLView(ContentNegotiatedView):
         try:
             return render_to_response(template_name,
                                       context, context_instance=RequestContext(request),
-                                      mimetype='text/html')
+                                      content_type='text/html')
         except TemplateDoesNotExist:
             return NotImplemented
 
@@ -313,7 +313,7 @@ class TextView(ContentNegotiatedView):
         try:
             return render_to_response(template_name,
                                       context, context_instance=RequestContext(request),
-                                      mimetype='text/plain')
+                                      content_type='text/plain')
         except TemplateDoesNotExist:
             return NotImplemented
 
