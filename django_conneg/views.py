@@ -154,7 +154,7 @@ Your Accept header didn't contain any supported media ranges.
 
 Supported ranges are:
 
- * %s\n""" % '\n * '.join(sorted('%s (%s; %s)' % (f.name, ", ".join(m.value for m in f.mimetypes), f.format) for f in request.renderers if not any(m in tried_mimetypes for m in f.mimetypes))), mimetype="text/plain")
+ * %s\n""" % '\n * '.join(sorted('%s (%s; %s)' % (f.name, ", ".join(m.value for m in f.mimetypes), f.format) for f in request.renderers if not any(m in tried_mimetypes for m in f.mimetypes))), content_type="text/plain")
         response.status_code = http_client.NOT_ACCEPTABLE
         return response
 
@@ -300,7 +300,7 @@ class HTMLView(ContentNegotiatedView):
         try:
             return render_to_response(template_name,
                                       context, context_instance=RequestContext(request),
-                                      mimetype='text/html')
+                                      content_type='text/html')
         except TemplateDoesNotExist:
             return NotImplemented
 
@@ -313,7 +313,7 @@ class TextView(ContentNegotiatedView):
         try:
             return render_to_response(template_name,
                                       context, context_instance=RequestContext(request),
-                                      mimetype='text/plain')
+                                      content_type='text/plain')
         except TemplateDoesNotExist:
             return NotImplemented
 
@@ -372,7 +372,7 @@ if 'json' in locals():
         def render_json(self, request, context, template_name):
             context = self.preprocess_context_for_json(context)
             return http.HttpResponse(json.dumps(self.simplify_for_json(context), indent=self._json_indent),
-                                     mimetype="application/json")
+                                     content_type="application/json")
 
     class JSONPView(JSONView):
         # The query parameter to look for the callback name
@@ -395,7 +395,7 @@ if 'json' in locals():
                                             self._default_jsonp_callback)
 
             return http.HttpResponse('%s(%s);' % (callback_name, json.dumps(self.simplify_for_json(context), indent=self._json_indent)),
-                                     mimetype="application/javascript")
+                                     content_type="application/javascript")
 
 class ErrorView(HTMLView, JSONPView, TextView):
     _force_fallback_format = ('html', 'json')
