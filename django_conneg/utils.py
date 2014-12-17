@@ -12,3 +12,7 @@ except ImportError:
             return "UTC"
     
     utc = _UTC()
+
+from django.http import HttpResponse
+import inspect
+content_type_arg = 'mimetype' if 'mimetype' in inspect.getargspec(HttpResponse.__init__).args else 'content_type'
