@@ -1,3 +1,9 @@
+python-django-conneg (0.10.1) unstable; urgency=low
+
+  * Use mimetype parameter to HttpResponse if an older version of Django
+
+ -- Alexander Dutton <alexander.dutton@it.ox.ac.uk>  Wed, 17 Dec 2014 11:10:20 +0000
+
 python-django-conneg (0.10.0) unstable; urgency=low
 
   * Use content_type parameter to HttpResponse
