@@ -25,7 +25,7 @@ from django.views.generic import View
 from django.utils.decorators import classonlymethod
 from django import http
 from django.template import RequestContext, TemplateDoesNotExist
-from django.shortcuts import render_to_response
+from django.shortcuts import render_to_response, render
 from django.utils.cache import patch_vary_headers
 
 from django_conneg.conneg import Conneg
@@ -63,8 +63,10 @@ class BaseContentNegotiatedView(View):
         format_url_parameter = kwargs.pop(self._format_url_parameter, None)
         if format_url_parameter:
             self.format_override = [format_url_parameter]
-        elif request.REQUEST.get(self._format_override_parameter):
-            self.format_override = request.REQUEST[self._format_override_parameter].split(',')
+        elif request.GET.get(self._format_override_parameter):
+            self.format_override = request.GET[self._format_override_parameter].split(',')
+        elif request.POST.get(self._format_override_parameter):
+            self.format_override = request.POST[self._format_override_parameter].split(',')
         else:
             self.format_override = None
 
@@ -279,8 +281,10 @@ class ContentNegotiatedView(BaseContentNegotiatedView):
                              'tried_mimetypes': exception.tried_mimetypes,
                              'available_renderers': [self.renderer_for_context(request, r) for r in self.conneg.renderers],
                              'format_parameter_name': self._format_override_parameter,
-                             'format_parameter': request.REQUEST.get(self._format_override_parameter),
-                             'format_parameter_parsed': request.REQUEST.get(self._format_override_parameter, '').split(','),
+                             'format_parameter': request.GET.get(self._format_override_parameter) or
+                                                 request.POST.get(self._format_override_parameter),
+                             'format_parameter_parsed': (request.GET.get(self._format_override_parameter, '') or
+                                                         request.POST.get(self._format_override_parameter, '')).split(','),
                              'accept_header': request.META.get('HTTP_ACCEPT'),
                              'accept_header_parsed': accept_header_parsed}}
         return self.error_view(request, context,
@@ -298,9 +302,7 @@ class HTMLView(ContentNegotiatedView):
         if template_name is None:
             return NotImplemented
         try:
-            return render_to_response(template_name,
-                                      context, context_instance=RequestContext(request),
-                                      **{content_type_arg: 'text/html'})
+            return render(request, template_name, context,  content_type='text/html')
         except TemplateDoesNotExist:
             return NotImplemented
 
@@ -311,9 +313,7 @@ class TextView(ContentNegotiatedView):
         if template_name is None:
             return NotImplemented
         try:
-            return render_to_response(template_name,
-                                      context, context_instance=RequestContext(request),
-                                      **{content_type_arg: 'text/plain'})
+            return render(request, template_name, context,  content_type='text/plain')
         except TemplateDoesNotExist:
             return NotImplemented
 
