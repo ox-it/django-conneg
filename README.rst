@@ -166,7 +166,7 @@ specify an ordering of renderers for such ambiguous situations::
              # ...
 
 As higher-numbered priorities are preferred, this will result in HTML always
-being prefered over XML in ambiguous situations.
+being preferred over XML in ambiguous situations.
 
 By default, ``django-conneg``'s built-in renderers have a priority of 0, except
 for ``HTMLView`` and ``TextView``, which each have a priority of 1 for the
