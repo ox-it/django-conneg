@@ -8,6 +8,7 @@ except ImportError: # Python 2.x
 
 from django.conf import settings
 from django.contrib.auth import authenticate
+from django.utils.deprecation import MiddlewareMixin
 from django_conneg.http import MediaType
 from django_conneg.views import HTMLView, JSONPView, TextView
 
@@ -31,7 +32,7 @@ class InactiveUserView(HTMLView, JSONPView, TextView):
         return self.render()
     post = put = delete = get
 
-class BasicAuthMiddleware(object):
+class BasicAuthMiddleware(MiddlewareMixin):
     """
     Sets request.user if there are valid basic auth credentials on the
     request, and turns @login_required redirects into 401 responses for
@@ -97,7 +98,7 @@ class BasicAuthMiddleware(object):
                 return response
 
         realm = getattr(settings, 'BASIC_AUTH_REALM', request.META.get('HTTP_HOST', 'restricted'))
-        
+
         if response.status_code == FOUND:
             response = self.unauthorized_view(request)
 
