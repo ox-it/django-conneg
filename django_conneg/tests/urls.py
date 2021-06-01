@@ -9,7 +9,7 @@ class OptionalAuthView(HTMLView, JSONView):
     _force_fallback_format = ('html', 'json')
     def get(self, request):
         response = self.render()
-        response.is_authenticated = request.user.is_authenticated()
+        response.is_authenticated = request.user.is_authenticated
         return response
 
 class LoginRequiredView(HTMLView, JSONView):
@@ -17,7 +17,7 @@ class LoginRequiredView(HTMLView, JSONView):
     @method_decorator(login_required)
     def get(self, request):
         response = self.render()
-        response.is_authenticated = request.user.is_authenticated()
+        response.is_authenticated = request.user.is_authenticated
         return response
 
 urlpatterns = patterns('',

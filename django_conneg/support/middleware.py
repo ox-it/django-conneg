@@ -46,7 +46,7 @@ class BasicAuthMiddleware(MiddlewareMixin):
 
     def process_request(self, request):
         # Ignore if user already authenticated
-        if request.user.is_authenticated():
+        if request.user.is_authenticated:
             return
 
         # Don't do anything for unsecure requests, unless DEBUG is on
